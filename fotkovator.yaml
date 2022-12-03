@@ -1,0 +1,10 @@
+frontend:
+  - module: basic_webserver
+    port: 8080
+
+backend:
+  - module: localfs
+    path: './photos'
+
+tag:
+  - module: metadata
