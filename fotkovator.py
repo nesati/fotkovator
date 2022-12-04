@@ -16,17 +16,16 @@ if __name__ == '__main__':
 
     bus = EventBus()
 
-    run_forever = []
-    for module in config['frontend']:
-        a = load_module('frontend', module['module'])
-        run_forever.append(a.init(bus, module))
-    for module in config['backend']:
-        run_forever.append(load_module('backend', module['module']).init(bus, module))
-    for module in config['tag']:
-        load_module('tag', module['module']).init(bus, module)
+    database = load_module('database', config['database']['module']).Database(bus, config['database'])
 
+    backend = load_module('backend', config['backend']['module']).Backend(bus, database, config['backend'])
+
+    modules = []
+    for module in config['modules']:
+        modules.append(load_module('modules', module['module']).Module(bus, database, backend, module).run_forever())
     loop = asyncio.new_event_loop()
 
-    run_forever = list(map(loop.create_task, run_forever))
+    modules += [database.run_forever(), backend.run_forever()]
+    modules = list(map(loop.create_task, filter(lambda corutine: corutine is not None, modules)))
 
-    loop.run_until_complete(asyncio.wait(run_forever))
+    loop.run_until_complete(asyncio.wait(modules))

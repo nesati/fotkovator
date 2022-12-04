@@ -1,10 +1,12 @@
-frontend:
-  - module: basic_webserver
-    port: 8080
-
 backend:
-  - module: localfs
-    path: './photos'
+  module: localfs
+  path: './photos'
 
-tag:
-  - module: metadata
+database:
+  module: sqlite
+  path: './photos.db'
+
+modules:
+  - module: tag.metadata
+  - module: frontend.basic_webserver
+    port: 8080
