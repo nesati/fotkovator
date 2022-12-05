@@ -28,4 +28,4 @@ if __name__ == '__main__':
     modules += [database.run_forever(), backend.run_forever()]
     modules = list(map(loop.create_task, filter(lambda corutine: corutine is not None, modules)))
 
-    loop.run_until_complete(asyncio.wait(modules))
+    loop.run_until_complete(asyncio.gather(*modules))

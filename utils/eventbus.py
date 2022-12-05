@@ -19,7 +19,9 @@ class EventBus:
         if len(self.listeners[event_name]) == 0:
             del self.listeners[event_name]
 
-    def emit(self, event_name, event):
+    async def emit(self, event_name, event):
         listeners = self.listeners.get(event_name, [])
+        tasks = []
         for listener in listeners:
-            asyncio.create_task(listener(event))
+            tasks.append(asyncio.create_task(listener(event)))
+        await asyncio.gather(*tasks)
