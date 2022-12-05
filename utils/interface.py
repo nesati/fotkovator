@@ -4,14 +4,16 @@ class Module:
 
 
 class Database(Module):
-    def __init__(self, bus):
+    def __init__(self, bus, loop):
         self.bus = bus
+        self.loop = loop
 
 
 class Backend(Module):
-    def __init__(self, bus, database):
+    def __init__(self, bus, database, loop):
         self.bus = bus
         self.database = database
+        self.loop = loop
 
         self.bus.add_listener('rescan', self.rescan)
 
@@ -23,10 +25,11 @@ class Backend(Module):
 
 
 class BasicModule(Module):
-    def __init__(self, bus, database, backend):
+    def __init__(self, bus, database, backend, loop):
         self.bus = bus
         self.database = database
         self.backend = backend
+        self.loop = loop
 
 
 class Frontend(BasicModule):
@@ -34,5 +37,8 @@ class Frontend(BasicModule):
 
 
 class TagModule(BasicModule):
+    def __init__(self, bus, database, backend, loop):
+        super().__init__(bus, database, backend, loop)
+
     def tag(self, img):
         raise NotImplemented('TagModule must implement tag function')
