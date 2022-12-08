@@ -18,10 +18,10 @@ class Backend(Module):
         self.bus.add_listener('rescan', self.rescan)
 
     async def rescan(self, *args):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def run_forever(self):
-        raise NotImplemented('Backend must return a coroutine')
+        raise NotImplementedError('Backend must return a coroutine')
 
 
 class BasicModule(Module):
@@ -41,4 +41,4 @@ class TagModule(BasicModule):
         super().__init__(bus, database, backend, loop)
 
     def tag(self, img):
-        raise NotImplemented('TagModule must implement tag function')
+        raise NotImplementedError('TagModule must implement tag function')
