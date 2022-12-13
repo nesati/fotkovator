@@ -17,9 +17,9 @@ class Database(Module):
         self.bus = bus
         self.loop = loop
 
-        self.bus.add_listener('new_image', lambda i: self.add_image(i[0]))
+        self.bus.add_listener('new_image', lambda i: self.add_image(*i[1:], ))
 
-    async def add_image(self, uid):
+    async def add_image(self, uid, dt, metadata):
         """
         Creates a record for a given image in the database.
         :param uid: The image's unique ID
