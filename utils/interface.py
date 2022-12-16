@@ -71,9 +71,12 @@ class Backend(Module):
         self.database = database
         self.loop = loop
 
-        self.bus.add_listener('rescan', self.rescan)
+        self.bus.add_listener('rescan', lambda *args: self.rescan)
 
-    async def rescan(self, *args):
+    async def get_image(self, uid):
+        raise NotImplementedError()
+
+    async def rescan(self):
         raise NotImplementedError()
 
     def run_forever(self):
@@ -95,6 +98,8 @@ class Frontend(BasicModule):
 class TagModule(BasicModule):
     def __init__(self, bus, database, backend, loop):
         super().__init__(bus, database, backend, loop)
+
+        self.bus.add_listener('new_image', self.tag)
 
     def tag(self, img):
         raise NotImplementedError('TagModule must implement tag function')
