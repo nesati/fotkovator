@@ -1,6 +1,7 @@
 backend:
   module: localfs
   path: './photos'
+  max_concurrency: 16
 
 database:
   module: sqlite

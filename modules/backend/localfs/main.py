@@ -13,6 +13,7 @@ class LocalfsBackend(Backend):
     def __init__(self, bus, database, loop, config):
         super().__init__(bus, database, loop)
         self.path = config['path']
+        self.max_concurrency = config.get('max_concurrency', 16)
 
     async def get_image(self, path):
         async with aiofiles.open(path, mode='rb') as f:
@@ -34,19 +35,29 @@ class LocalfsBackend(Backend):
                 except PIL.UnidentifiedImageError:
                     pass
 
-        async def DFS(path):
-            out = []
-            tasks = []
+        async def worker(q):
+            while True:
+                job = await q.get()
+                await job
+                q.task_done()
+
+        async def DFS(path, tasks):
             for item in await aiofiles.os.scandir(path):
                 if item.is_file():
-                    await check_file(item.path)
-                    out.append(item.path)
+                    await tasks.put(check_file(item.path))
                 elif item.is_dir():
-                    tasks.append(DFS(item.path))
-            out += await asyncio.gather(*tasks)
-            return out
+                    await tasks.put(DFS(item.path, tasks))
 
-        print(await DFS(self.path))
+        tasks = asyncio.Queue()
+        await DFS(self.path, tasks)
+        workers = [asyncio.create_task(worker(tasks)) for _ in range(self.max_concurrency)]
+        await tasks.join()
+        for worker in workers:
+            worker.cancel()
+        results = await asyncio.gather(*workers, return_exceptions=True)
+        for e in results:
+            if not isinstance(e, asyncio.CancelledError):
+                raise e
 
     async def run_forever(self):
         while 1:
