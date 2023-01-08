@@ -28,7 +28,9 @@ class LocalfsBackend(Backend):
         async def check_file(path):
             if len(await self.database.check_image(path)) == 0:
                 try:
-                    await self.bus.emit('new_image', await self.get_image(path))
+                    image = await self.get_image(path)
+                    await self.bus.emit('new_image', image)
+                    await self.bus.emit('done', image[1])
                 except PIL.UnidentifiedImageError:
                     pass
 

@@ -9,6 +9,7 @@ class Database(Module):
 
     Only one database can be used at one time.
     """
+
     def __init__(self, bus, loop):
         """
         :param bus: EventBus instance
@@ -19,6 +20,7 @@ class Database(Module):
 
         self.bus.add_listener('new_image', lambda i: self.add_image(*i[1:], ))
         self.bus.add_listener('tag', lambda t: self.add_tag(*t))
+        self.bus.add_listener('done', self.mark_done)
 
     async def add_image(self, uid, dt, metadata):
         """
@@ -62,6 +64,13 @@ class Database(Module):
         """
         Lists all tags in the database.
         :return: list of tag names
+        """
+        raise NotImplementedError()
+
+    async def mark_done(self, uid):
+        """
+        Marks image processing as done.
+        :param uid: The image's unique ID
         """
         raise NotImplementedError()
 
