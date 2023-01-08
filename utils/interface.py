@@ -18,6 +18,7 @@ class Database(Module):
         self.loop = loop
 
         self.bus.add_listener('new_image', lambda i: self.add_image(*i[1:], ))
+        self.bus.add_listener('tag', lambda t: self.add_tag(*t))
 
     async def add_image(self, uid, dt, metadata):
         """
