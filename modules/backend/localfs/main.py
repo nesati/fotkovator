@@ -36,10 +36,9 @@ class LocalfsBackend(Backend):
                     pass
 
         async def worker(q):
-            while True:
+            while not q.empty():
                 job = await q.get()
                 await job
-                q.task_done()
 
         async def DFS(path, tasks):
             for item in await aiofiles.os.scandir(path):
@@ -51,13 +50,7 @@ class LocalfsBackend(Backend):
         tasks = asyncio.Queue()
         await DFS(self.path, tasks)
         workers = [asyncio.create_task(worker(tasks)) for _ in range(self.max_concurrency)]
-        await tasks.join()
-        for worker in workers:
-            worker.cancel()
-        results = await asyncio.gather(*workers, return_exceptions=True)
-        for e in results:
-            if not isinstance(e, asyncio.CancelledError):
-                raise e
+        await asyncio.gather(*workers)
 
     async def run_forever(self):
         while 1:
