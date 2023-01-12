@@ -22,7 +22,21 @@ async def index():
 
     last = len(images) < 24
 
-    return await render_template("index.html", images=images, page=page, last=last)
+    return await render_template("index.html", querry='', images=images, page=page, last=last)
+
+
+@app.route("/search")
+async def search():
+    if 'p' in request.args:
+        page = int(request.args['p'])
+    else:
+        page = 0
+
+    images = await app.config['database'].search(request.args['tag'], page=page, limit=24)
+
+    last = len(images) < 24
+
+    return await render_template("index.html", querry=request.args['tag'], images=images, page=page, last=last)
 
 
 @app.route("/detail/")
