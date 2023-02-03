@@ -18,7 +18,7 @@ class LocalfsBackend(Backend):
     async def get_image(self, path):
         async with aiofiles.open(path, mode='rb') as f:
             return Image.open(BytesIO(await f.read())), path, None, {
-                "uid": path,
+                "uri": path,
                 "path": os.path.abspath(path),
                 "file_created": await aiofiles.os.path.getctime(path),
                 "file_modified": await aiofiles.os.path.getmtime(path),
@@ -27,7 +27,7 @@ class LocalfsBackend(Backend):
 
     async def rescan(self, *args):
         async def check_file(path):
-            if len(await self.database.check_image(path)) == 0:
+            if not await self.database.check_image(path):
                 try:
                     image = await self.get_image(path)
                     await self.bus.emit('new_image', image)

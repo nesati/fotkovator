@@ -35,7 +35,7 @@
 <body>
 <main class="container">
 	<a href="/" class="text-dark text-decoration-none"><h1 class="">Štítkovátor</h1></a>
-	<img src="/img?uid={{ uid | safe }}" class="img-fluid">
+	<img src="/img?uri={{ info.uri | safe }}" class="img-fluid">
 	<button class="btn btn-primary float-end" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
 		<span class="material-icons" style="line-height: unset">info</span>
 	</button>
@@ -51,7 +51,7 @@
 	<div class="collapse" id="collapseExample">
 		<div class="card card-body">
 			<table>
-				{% for key, value in metadata.items() %}
+				{% for key, value in info.metadata.items() %}
 				<tr><td>{{ key }}</td><td>{{ value }}</td></tr>
 				{% endfor %}
 			</table>

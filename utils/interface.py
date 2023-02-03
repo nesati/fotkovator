@@ -22,40 +22,40 @@ class Database(Module):
         self.bus.add_listener('tag', lambda t: self.add_tag(*t))
         self.bus.add_listener('done', self.mark_done)
 
-    async def add_image(self, uid, dt, metadata):
+    async def add_image(self, uri, dt, metadata):
         """
         Creates a record for a given image in the database.
-        :param uid: The image's unique ID
+        :param uri: The image's identifier
         """
         raise NotImplementedError()
 
-    async def check_image(self, uid):
+    async def check_image(self, uri):
         """
         Checks if the there exists a record for a given image in the database.
-        :param uid: The image's unique ID
+        :param uri: The image's backend identifier
         :return: bool
         """
         raise NotImplementedError()
 
-    async def get_tags(self, uid):
+    async def get_tags(self, uri):
         """
         Lists tags of a given image.
-        :param uid: The image's unique ID
+        :param uri: The image's identifier
         """
         raise NotImplementedError()
 
-    async def add_tag(self, uid, tag):
+    async def add_tag(self, uri, tag):
         """
         Adds a tag to a given image.
-        :param uid: The image's unique ID
+        :param uri: The image's identifier
         :param tag: Tag name
         """
         raise NotImplementedError()
 
-    async def remove_tag(self, uid, tag):
+    async def remove_tag(self, uri, tag):
         """
         Removes a tag from a given image.
-        :param uid: The image's unique ID
+        :param uri: The image's identifier
         :param tag: Tag name
         """
         raise NotImplementedError()
@@ -67,10 +67,10 @@ class Database(Module):
         """
         raise NotImplementedError()
 
-    async def mark_done(self, uid):
+    async def mark_done(self, uri):
         """
         Marks image processing as done.
-        :param uid: The image's unique ID
+        :param uri: The image's identifier
         """
         raise NotImplementedError()
 
@@ -83,7 +83,7 @@ class Backend(Module):
 
         self.bus.add_listener('rescan', lambda *args: self.rescan)
 
-    async def get_image(self, uid):
+    async def get_image(self, uri):
         raise NotImplementedError()
 
     async def rescan(self):
