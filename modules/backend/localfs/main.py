@@ -54,7 +54,11 @@ class LocalfsBackend(Backend):
             img = Image.open(img_file)
             metadata['width'] = img.width
             metadata['height'] = img.height
-            return img, path, None, metadata
+            if 'datetime_original' in metadata:
+                dt = metadata['datetime_original']
+            else:
+                dt = None
+            return img, path, dt, metadata
 
     async def rescan(self, *args):
         async def check_file(path):

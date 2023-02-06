@@ -24,17 +24,19 @@ class MetadataTagger(TagModule):
         # TODO analyze exif
 
         # analyze datetime
-        if dt is None or (dt.second == 0 and dt.minute == 0 and dt.hour == 0):  # if there's no date or it is unprecise
-            # collect possible dates
-            dts = {dt}
-            if 'file_created' in img[3]:
-                dts.add(img[3]['file_created'])
-            if 'file_modified' in img[3]:
-                dts.add(img[3]['file_modified'])
+        if not img[2]:  # if the datetime was not taken from exif
+            # if there's no date, or it is unprecise do extra analysis
+            if dt is None or (dt.second == 0 and dt.minute == 0 and dt.hour == 0):
+                # collect possible dates
+                dts = {dt}
+                if 'file_created' in img[3]:
+                    dts.add(img[3]['file_created'])
+                if 'file_modified' in img[3]:
+                    dts.add(img[3]['file_modified'])
 
-            # filter unix time 0 and future dates
-            dts = filter(lambda dt: dt < datetime.now() and dt != datetime.fromtimestamp(0), dts)
+                # filter unix time 0 and future dates
+                dts = filter(lambda dt: dt < datetime.now() and dt != datetime.fromtimestamp(0), dts)
 
-            dt = min(dts)  # select oldest as it is most likely to be correct
+                dt = min(dts)  # select oldest as it is most likely to be correct
 
-        await self.bus.emit('dt', (img[1], dt))
+            await self.bus.emit('dt', (img[1], dt))
