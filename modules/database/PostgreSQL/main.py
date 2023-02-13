@@ -1,7 +1,6 @@
-import json
-
 import asyncpg
 
+from utils.json_utils import decoder, encoder
 from utils.interface import Database
 
 COMMIT_INTERVAL = 60
@@ -49,8 +48,9 @@ class PostgreDatabase(Database):
         await self.check_database()
 
         async with self.pool.acquire() as conn:
+            await conn.set_type_codec('json', encoder=encoder, decoder=decoder, schema='pg_catalog')
             await conn.execute('INSERT INTO images(uri, created, metadata, done) VALUES ($1, $2, $3, false);', uri, dt,
-                               json.dumps(metadata))
+                               metadata)
 
     async def check_image(self, uri):
         await self.check_database()
@@ -64,7 +64,7 @@ class PostgreDatabase(Database):
         await self.check_database()
 
         async with self.pool.acquire() as conn:
-            await conn.set_type_codec('json', encoder=json.dumps, decoder=json.loads, schema='pg_catalog')
+            await conn.set_type_codec('json', encoder=encoder, decoder=decoder, schema='pg_catalog')
             row = await conn.fetchrow('SELECT * FROM images WHERE uri=$1;', uri)
 
         return row
