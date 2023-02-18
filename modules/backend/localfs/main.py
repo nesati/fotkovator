@@ -62,11 +62,12 @@ class LocalfsBackend(Backend):
 
     async def rescan(self, *args):
         async def check_file(path):
-            if not await self.database.check_image(path):
+            new, uid = await self.database.check_image(path)
+            if new:
                 try:
                     image = await self.get_image(path)
-                    await self.bus.emit('new_image', image)
-                    await self.bus.emit('done', image[1])
+                    await self.bus.emit('new_image', (uid, *image))
+                    await self.bus.emit('done', uid)
                 except (PIL.UnidentifiedImageError, plum.exceptions.UnpackError):
                     pass
 

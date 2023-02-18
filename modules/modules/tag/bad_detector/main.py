@@ -29,8 +29,8 @@ class BadTagger(TagModule):
         self.model_loaded = asyncio.Event(loop=loop)
 
     async def tag(self, img):
-        if not await self._is_good(img[0]):
-            await self.bus.emit('tag', (img[1], 'bad'))
+        if not await self._is_good(img[1]):
+            await self.bus.emit('tag', (img[0], 'bad'))
 
     async def _is_good(self, img):
         """

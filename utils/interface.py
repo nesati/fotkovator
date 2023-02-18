@@ -18,44 +18,72 @@ class Database(Module):
         self.bus = bus
         self.loop = loop
 
-        self.bus.add_listener('new_image', lambda i: self.add_image(*i[1:], ))
+        self.bus.add_listener('new_image', lambda i: self.add_image(i[0], *i[2:]))
         self.bus.add_listener('tag', lambda t: self.add_tag(*t))
         self.bus.add_listener('done', self.mark_done)
 
-    async def add_image(self, uri, dt, metadata):
+    async def add_image(self, uid, uri, dt, metadata):
         """
         Creates a record for a given image in the database.
-        :param uri: The image's identifier
+        :param uid: int: The image's identifier
+        :param uri: str: The image's backend identifier
+        :param dt: datetime of the image's creation
+        :param metadata: dict: additional information about the image
         """
         raise NotImplementedError()
 
     async def check_image(self, uri):
         """
-        Checks if the there exists a record for a given image in the database.
-        :param uri: The image's backend identifier
-        :return: bool
+        Finds uid for the image (existing or new) and determines if the photo should be re-tagged.
+        :param uri: str: The image's backend identifier
+        :return: (int: uid, bool: analyze)
         """
         raise NotImplementedError()
 
-    async def get_tags(self, uri):
+    async def get_image(self, uid):
+        """
+        Get uri of an image.
+        :param uid: int: The image's identifier
+        :return: str: uri: The image's backend identifier
+        """
+        raise NotImplementedError()
+
+    async def get_info(self, uid):
+        """
+        Get info about image.
+        :param uid: int: The image's identifier
+        :return: dict: must contain keys: uid, uri, dt, metadata, done
+        """
+        raise NotImplementedError()
+
+    async def mark_done(self, uid):
         """
         Lists tags of a given image.
-        :param uri: The image's identifier
+        :param uid: int: The image's identifier
+        :return: list of strs
         """
         raise NotImplementedError()
 
-    async def add_tag(self, uri, tag):
+    async def search(self, tagname, **kwargs):
+        """
+        Search images based on tags.
+        :param tagname: str: name of the tag the image must have
+        :return: list: dict: must contain keys: uid, uri, dt, metadata, done
+        """
+        raise NotImplementedError()
+
+    async def add_tag(self, uid, tag):
         """
         Adds a tag to a given image.
-        :param uri: The image's identifier
-        :param tag: Tag name
+        :param uid: int: The image's identifier
+        :param tag: str: Tag name
         """
         raise NotImplementedError()
 
-    async def remove_tag(self, uri, tag):
+    async def remove_tag(self, uid, tag):
         """
         Removes a tag from a given image.
-        :param uri: The image's identifier
+        :param uid: int: The image's identifier
         :param tag: Tag name
         """
         raise NotImplementedError()
@@ -67,10 +95,10 @@ class Database(Module):
         """
         raise NotImplementedError()
 
-    async def mark_done(self, uri):
+    async def list_images(self, **kwargs):
         """
-        Marks image processing as done.
-        :param uri: The image's identifier
+        Get images.
+        :return: list: dict: must contain keys: uid, uri, dt, metadata, done
         """
         raise NotImplementedError()
 

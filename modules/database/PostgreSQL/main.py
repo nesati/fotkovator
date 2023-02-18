@@ -34,7 +34,7 @@ class PostgreDatabase(Database):
                         done boolean NOT NULL 
                     );''')
                     await conn.execute('''CREATE TABLE IF NOT EXISTS tags(
-                        uri text NOT NULL,
+                        uid integer NOT NULL,
                         tag_id integer NOT NULL
                     );''')
                     await conn.execute('''CREATE TABLE IF NOT EXISTS tag_names(
@@ -44,37 +44,49 @@ class PostgreDatabase(Database):
             except asyncpg.exceptions.UniqueViolationError:  # conflict with other thread
                 await self.check_database()  # retry
 
-    async def add_image(self, uri, dt, metadata):
+    async def add_image(self, uid, uri, dt, metadata):
         await self.check_database()
 
         async with self.pool.acquire() as conn:
             await conn.set_type_codec('json', encoder=encoder, decoder=decoder, schema='pg_catalog')
-            await conn.execute('INSERT INTO images(uri, created, metadata, done) VALUES ($1, $2, $3, false);', uri, dt,
+            await conn.execute('INSERT INTO images(uid, uri, created, metadata, done) VALUES ($1, $2, $3, $4, false);', uid, uri, dt,
                                metadata)
 
     async def check_image(self, uri):
         await self.check_database()
 
         async with self.pool.acquire() as conn:
-            row = await conn.fetchrow('SELECT done FROM images WHERE uri=$1;', uri)
+            row = await conn.fetchrow('SELECT uid, done FROM images WHERE uri=$1;', uri)
+            if row is None:
+                # get new uid
+                uid = await conn.fetchval("SELECT nextval(pg_get_serial_sequence('images', 'uid')) as new_uid;")
+            else:
+                uid = row['uid']
+        return row is None, uid  # TODO and row['done']
 
-        return row is not None
+    async def get_image(self, uid):
+        await self.check_database()
 
-    async def get_info(self, uri):
+        async with self.pool.acquire() as conn:
+            uri = await conn.fetchrow('SELECT uri FROM images WHERE uid=$1;', uid)
+
+        return uri
+
+    async def get_info(self, uid):
         await self.check_database()
 
         async with self.pool.acquire() as conn:
             await conn.set_type_codec('json', encoder=encoder, decoder=decoder, schema='pg_catalog')
-            row = await conn.fetchrow('SELECT * FROM images WHERE uri=$1;', uri)
+            row = await conn.fetchrow('SELECT * FROM images WHERE uid=$1;', uid)
 
         return row
 
-    async def get_tags(self, uri):
+    async def get_tags(self, uid):
         await self.check_database()
 
         async with self.pool.acquire() as conn:
             results = await conn.fetch(
-                'SELECT name FROM tag_names INNER JOIN tags ON tag_names.tag_id = tags.tag_id WHERE uri=$1;', uri)
+                'SELECT name FROM tag_names INNER JOIN tags ON tag_names.tag_id = tags.tag_id WHERE uid=$1;', uid)
 
         return results
 
@@ -86,21 +98,21 @@ class PostgreDatabase(Database):
         async with self.pool.acquire() as conn:
             if 'page' in kwargs:
                 out = await conn.fetch(
-                    'SELECT images.uri, created, metadata, done FROM images INNER JOIN tags ON images.uri = tags.uri WHERE tag_id=$1 ORDER BY created LIMIT $2 OFFSET $3;',
+                    'SELECT images.uid, uri, created, metadata, done FROM images INNER JOIN tags ON images.uid = tags.uid WHERE tag_id=$1 ORDER BY created LIMIT $2 OFFSET $3;',
                     tag_id, kwargs['limit'], kwargs['page'] * kwargs['limit'])
             else:
                 out = await conn.fetch(
-                    'SELECT images.uri, created, metadata, done FROM images INNER JOIN tags ON images.uri = tags.uri WHERE tag_id=$1 ORDER BY created;',
+                    'SELECT images.uid, uri, created, metadata, done FROM images INNER JOIN tags ON images.uid = tags.uid WHERE tag_id=$1 ORDER BY created;',
                     tag_id)
 
         # out = list(map(lambda t: dict(zip(('uid', 'time', 'metadata', 'done'), t)), out))
         return out
 
-    async def mark_done(self, uri):
+    async def mark_done(self, uid):
         await self.check_database()
 
         async with self.pool.acquire() as conn:
-            await conn.execute('UPDATE images SET done=true WHERE uri=$1;', uri)
+            await conn.execute('UPDATE images SET done=true WHERE uid=$1;', uid)
 
     async def _get_tag_id(self, tag):
         await self.check_database()
@@ -113,7 +125,7 @@ class PostgreDatabase(Database):
 
         return result
 
-    async def add_tag(self, uri, tag):
+    async def add_tag(self, uid, tag):
         await self.check_database()
         tag_id = await self._get_tag_id(tag)
         if tag_id is None:
@@ -122,9 +134,9 @@ class PostgreDatabase(Database):
                 tag_id = await self._get_tag_id(tag)
 
         async with self.pool.acquire() as conn:
-            await conn.execute('INSERT INTO tags VALUES ($1, $2)', uri, tag_id)
+            await conn.execute('INSERT INTO tags VALUES ($1, $2)', uid, tag_id)
 
-    async def remove_tag(self, uri, tag):
+    async def remove_tag(self, uid, tag):
         await self.check_database()
 
         tag_id = await self._get_tag_id(tag)
@@ -132,7 +144,7 @@ class PostgreDatabase(Database):
             return False
 
         async with self.pool.acquire() as conn:
-            await conn.execute('DELETE FROM tags WHERE uri=$1 AND tag_id=$2;', uri, tag_id)
+            await conn.execute('DELETE FROM tags WHERE uid=$1 AND tag_id=$2;', uid, tag_id)
 
     async def list_tags(self):
         await self.check_database()

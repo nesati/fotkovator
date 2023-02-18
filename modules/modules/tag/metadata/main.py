@@ -16,15 +16,15 @@ class MetadataTagger(TagModule):
     async def tag(self, img):
         # analyze path
         dt = None
-        if 'path' in img[3]:
-            tags, dt = path_analyzer.analyze(img[3]['path'])
+        if 'path' in img[4]:
+            tags, dt = path_analyzer.analyze(img[4]['path'])
             for tag in tags:
-                await self.bus.emit('tag', (img[1], tag))
+                await self.bus.emit('tag', (img[0], tag))
 
         # TODO analyze exif
 
         # analyze datetime
-        if not img[2]:  # if the datetime was not taken from exif
+        if not img[3]:  # if the datetime was not taken from exif
             # if there's no date, or it is unprecise do extra analysis
             if dt is None or (dt.second == 0 and dt.minute == 0 and dt.hour == 0):
                 # collect possible dates

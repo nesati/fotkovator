@@ -74,9 +74,9 @@
 	<div class="grid">
 		{% for image in images %}
 		<!-- image -->
-		<a class="grid-image {% if image.big %}big{% endif %} position-relative p-0" href="/detail?uri={{ image.uri | safe }}">
+		<a class="grid-image {% if image.big %}big{% endif %} position-relative p-0" href="/detail?uid={{ image.uid | safe }}">
 			<div class="ratio ratio-1x1 rounded p-0"
-				 style='background-image: url("/img?uri={{ image.uri | safe }}{% if not image.big %}&small{% endif %}");background-size: cover;background-position: center;'>
+				 style='background-image: url("/img?uid={{ image.uid | safe }}{% if not image.big %}&small{% endif %}");background-size: cover;background-position: center;'>
 			</div>
 			{% if not image.done %}
 			<!-- processing image -->

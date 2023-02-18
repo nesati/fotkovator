@@ -41,15 +41,16 @@ async def search():
 
 @app.route("/detail/")
 async def detail():
-    uri = request.args['uri']
-    info = await app.config['database'].get_info(uri)
-    tags = await app.config['database'].get_tags(uri)
+    uid = int(request.args['uid'])
+    info = await app.config['database'].get_info(uid)
+    tags = await app.config['database'].get_tags(uid)
     return await render_template('photo.html', info=info, tags=tags)
 
 
 @app.route("/img/")
 async def image():
-    image = (await app.config['backend'].get_image(request.args['uri']))[0]
+    uri = (await app.config['database'].get_image(int(request.args['uid'])))[0]
+    image = (await app.config['backend'].get_image(uri))[0]
     if 'small' in request.args:
         image = ImageOps.contain(image, (256, 256))
     img_io = BytesIO()
