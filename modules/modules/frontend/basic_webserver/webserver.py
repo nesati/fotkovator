@@ -50,9 +50,11 @@ async def detail():
 @app.route("/img/")
 async def image():
     uri = (await app.config['database'].get_image(int(request.args['uid'])))[0]
-    image = (await app.config['backend'].get_image(uri))[0]
+
     if 'small' in request.args:
-        image = ImageOps.contain(image, (256, 256))
+        image = await app.config['backend'].get_thumbnail(uri)
+    else:
+        image = (await app.config['backend'].get_image(uri))[0]
     img_io = BytesIO()
     image.save(img_io, 'JPEG', quality=70)
     img_io.seek(0)

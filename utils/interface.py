@@ -114,6 +114,14 @@ class Backend(Module):
     async def get_image(self, uri):
         raise NotImplementedError()
 
+    async def get_thumbnail(self, uri):
+        """
+        Get thumbnail for given image.
+        :param uri: str: The image's backend identifier
+        :return: PIL.Image
+        """
+        raise NotImplementedError()
+
     async def rescan(self):
         raise NotImplementedError()
 

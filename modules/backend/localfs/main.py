@@ -48,8 +48,6 @@ class LocalfsBackend(Backend):
 
                 # TODO gps
 
-                # TODO exif thumbnail
-
             img_file.seek(0)
             img = Image.open(img_file)
             metadata['width'] = img.width
@@ -59,6 +57,11 @@ class LocalfsBackend(Backend):
             else:
                 dt = None
             return img, path, dt, metadata
+
+    async def get_thumbnail(self, path):
+        async with aiofiles.open(path, mode='rb') as f:
+            img = Exif(BytesIO(await f.read()))
+            return Image.open(BytesIO(img.get_thumbnail()))
 
     async def rescan(self, *args):
         async def check_file(path):
