@@ -9,5 +9,6 @@ database:
 
 modules:
   - module: tag.metadata
+  - module: tag.face_recognition
   - module: frontend.basic_webserver
     port: 8080

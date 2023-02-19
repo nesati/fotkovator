@@ -90,6 +90,7 @@ class LocalfsBackend(Backend):
         await DFS(self.path, tasks)
         workers = [asyncio.create_task(worker(tasks)) for _ in range(self.max_concurrency)]
         await asyncio.gather(*workers)
+        await self.bus.emit('scan_done', ())
 
     async def run_forever(self):
         while 1:
