@@ -1,10 +1,13 @@
 import json
+import math
 from io import BytesIO
 
 from PIL import ImageOps
 from quart import Quart, render_template, request, send_file, Response
 
 app = Quart(__name__)
+
+PAGE = 24
 
 
 @app.route("/")
@@ -14,15 +17,15 @@ async def index():
     else:
         page = 0
 
-    images = await app.config['database'].list_images(page=page, limit=24)
+    images, n_imgs = await app.config['database'].list_images(page=page, limit=PAGE)
 
     # for i in range(len(images)):  # testing: random images are marked as big
     #    if random.random() <= 0.05:
     #        images[i]['big'] = True
 
-    last = len(images) < 24
+    n_pages = math.ceil(n_imgs / PAGE)
 
-    return await render_template("index.html", querry='', images=images, page=page, last=last)
+    return await render_template("index.html", querry='', images=images, page=page, n_pages=n_pages)
 
 
 @app.route("/search")
@@ -32,11 +35,10 @@ async def search():
     else:
         page = 0
 
-    images = await app.config['database'].search(request.args['tag'], page=page, limit=24)
+    images, n_imgs = await app.config['database'].search(request.args['tag'], page=page, limit=PAGE)
 
-    last = len(images) < 24
-
-    return await render_template("index.html", querry=request.args['tag'], images=images, page=page, last=last)
+    n_pages = math.ceil(n_imgs / PAGE)
+    return await render_template("index.html", querry=request.args['tag'], images=images, page=page, n_pages=n_pages)
 
 
 @app.route("/detail/")

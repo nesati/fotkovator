@@ -96,6 +96,8 @@ class PostgreDatabase(Database):
         tag_id = await self._get_tag_id(tagname)
 
         async with self.pool.acquire() as conn:
+            n_imgs = await conn.fetchval('SELECT COUNT(*) FROM images INNER JOIN tags ON images.uid = tags.uid WHERE tag_id=$1;',
+                                         tag_id)
             if 'page' in kwargs:
                 out = await conn.fetch(
                     'SELECT images.uid, uri, created, metadata, done FROM images INNER JOIN tags ON images.uid = tags.uid WHERE tag_id=$1 ORDER BY created LIMIT $2 OFFSET $3;',
@@ -106,7 +108,7 @@ class PostgreDatabase(Database):
                     tag_id)
 
         # out = list(map(lambda t: dict(zip(('uid', 'time', 'metadata', 'done'), t)), out))
-        return out
+        return out, n_imgs
 
     async def mark_done(self, uid):
         await self.check_database()
@@ -159,13 +161,14 @@ class PostgreDatabase(Database):
         await self.check_database()
 
         async with self.pool.acquire() as conn:
+            n_imgs = await conn.fetchval('SELECT COUNT(*) FROM images;')
             if 'page' in kwargs:
                 results = await conn.fetch('SELECT * FROM images ORDER BY created LIMIT $1 OFFSET $2;', kwargs['limit'],
                                            kwargs['page'] * kwargs['limit'])
             else:
                 results = await conn.fetch('SELECT * FROM images ORDER BY created;')
 
-        return results
+        return results, n_imgs
 
     def run_forever(self):
         return self.check_database()
