@@ -21,6 +21,8 @@ class FaceTagger(TagModule):
         """
         Coverts embeddings to person tag.
         """
+        if len(self.embeddings) == 0:
+            return
         X = np.array(list(map(lambda x: x[1], self.embeddings)))
         clustering = AgglomerativeClustering(
             n_clusters=None,
