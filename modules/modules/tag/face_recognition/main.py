@@ -1,6 +1,6 @@
 import face_recognition
 import numpy as np
-from sklearn.cluster import MeanShift
+from sklearn.cluster import AgglomerativeClustering
 
 from utils.interface import TagModule
 
@@ -20,10 +20,14 @@ class FaceTagger(TagModule):
     async def group(self):
         """
         Coverts embeddings to person tag.
-        Uses MeanShift clustering.
         """
         X = np.array(list(map(lambda x: x[1], self.embeddings)))
-        clustering = MeanShift(bandwidth=2).fit(X)
+        clustering = AgglomerativeClustering(
+            n_clusters=None,
+            metric='euclidean',
+            distance_threshold=1.2  # taken from face_recognition.compare_faces * 2
+        ).fit(X)
+
         for uid, label in zip(map(lambda x: x[0], self.embeddings), clustering.labels_):
             await self.bus.emit('tag', (uid, f'Person {label}'))
         self.embeddings = []  # delete unnecessary data and prepare for next scan
