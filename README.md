@@ -1,30 +1,56 @@
 # Fotkovátor
 
-## Core
+Systém na automatické štítkování fotek.
 
-- čte konfiguraci
-- spouští služby
+## Instalace
 
-## Moduly
+Pro jakoukoliv instalaci je nejprve potřeba [Python](https://www.python.org/) a závislosti, které lze nainstalovat příkazem: 
 
-### Blackend
+```shell
+pip intall -r requirements.txt
+```
 
-- soubory
+Další kroky se odvíjejí od zvolených [modulů](#Konfigurace-modulů). Většinou však stačí:
 
-### Štítky
-- face recognition
-- scene recognition
-- metadata analyzer
-- detektor duplicit
-- detektor špatných (rozmazané, rozostřené, otočené) fotek
+```shell
+pip intall -r modules/<cesta k modulu>/requirements.txt
+```
 
-### Databáze
+## Konfigurace
 
-- sqlite
+Celý systém se konfiguruje v souboru `fotkovator.yaml`.
 
-### Search
+## Použití
 
-### Frontend
+Program zapnete spuštěním:
 
-- webserver
+```shell
+python fotkovator.py
+```
 
+Program okamžitě začne zpracovávat fotky z nakonfigurovaného backendu.
+
+## Konfigurace modulů
+
+### Lokální soubory
+
+Přístup k lokálním souborům je umožněn modulem `localfs`.
+
+#### Argumenty
+
+`path` - *Povinný* Cesta ke složce s obrázky.
+
+
+#### Příklad konfigurace
+
+```yaml
+backend:
+  module: localfs
+  path: './photos'
+```
+
+## TODO
+
+## Credits
+
+[py-event-bus](https://github.com/joeltok/py-event-bus)
