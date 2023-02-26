@@ -28,33 +28,45 @@
 			width: 2em;
 			border-radius: 50%;
 		}
+		.img {
+			max-width: 80vw;
+			max-height: 80vh;
+		}
 	</style>
-
 	<title>Štítkovátor</title>
 </head>
 <body>
 <main class="container">
 	<a href="/" class="text-dark text-decoration-none"><h1 class="">Štítkovátor</h1></a>
-	<img src="/img?uid={{ info.uid | safe }}" class="img-fluid">
-	<button class="btn btn-primary float-end" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-		<span class="material-icons" style="line-height: unset">info</span>
-	</button>
-	<div class="tags m-2">
-		{% for tag in tags %}
-		<a class="badge rounded-pill text-light text-decoration-none" style="background: {{ tag.color | safe }};color: {{ tag.textColor | safe }};" href="/search?tag={{ tag.name | safe }}">
-			<!--img src="clovek.jpg"-->
-			{{ tag.name }}
-		</a>
-		{% endfor %}
-	</div>
-	</p>
-	<div class="collapse" id="collapseExample">
-		<div class="card card-body">
-			<table>
-				{% for key, value in info.metadata.items() %}
-				<tr><td>{{ key }}</td><td>{{ value }}</td></tr>
+	<div class="row">
+		<div class="col">
+			<div class="tags m-2">
+				{% for tag in tags %}
+					<a class="badge rounded-pill text-light text-decoration-none"
+					   style="background: {{ tag.color | safe }};color: {{ tag.textColor | safe }};"
+					   href="/search?tag={{ tag.name | safe }}">
+						<!--img src="clovek.jpg"-->
+						{{ tag.name }}
+					</a>
 				{% endfor %}
-			</table>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col p-2">
+			<img src="/img?uid={{ info.uid | safe }}" class="img d-block mx-auto">
+		</div>
+		<div class="col p-2">
+			<div class="card card-body d-block mx-auto">
+				<table>
+					{% for key, value in info.metadata.items() %}
+						<tr>
+							<td>{{ key }}</td>
+							<td>{{ value }}</td>
+						</tr>
+					{% endfor %}
+				</table>
+			</div>
 		</div>
 	</div>
 </main>
