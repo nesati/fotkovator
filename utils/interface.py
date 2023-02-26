@@ -111,14 +111,21 @@ class Backend(Module):
 
         self.bus.add_listener('rescan', lambda *args: self.rescan)
 
-    async def get_image(self, uri):
+    async def get_image(self, uri, load=False):
+        """
+        Get image data.
+        :param uri: str: The image's backend identifier
+        :param load: whether to open the image with PIL
+        :return: if load=True PIL.image; if load=False bytes
+        """
         raise NotImplementedError()
 
-    async def get_thumbnail(self, uri):
+    async def get_thumbnail(self, uri, load=False):
         """
         Get thumbnail for given image.
         :param uri: str: The image's backend identifier
-        :return: PIL.Image
+        :param load: whether to open the image with PIL
+        :return: if load=True PIL.image; if load=False bytes
         """
         raise NotImplementedError()
 

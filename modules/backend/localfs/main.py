@@ -18,57 +18,65 @@ class LocalfsBackend(Backend):
         self.path = config['path']
         self.max_concurrency = config.get('max_concurrency', 16)
 
-    async def get_image(self, path):
+    async def get_image(self, path, load=False, metadata=False):
         async with aiofiles.open(path, mode='rb') as f:
-            img_file = BytesIO(await f.read())
-            metadata = {
-                "uri": path,
-                "path": os.path.abspath(path),
-                "file_created": await aiofiles.os.path.getctime(path),
-                "file_modified": await aiofiles.os.path.getmtime(path),
-                "file_size": await aiofiles.os.path.getsize(path),
-            }
-            img = Exif(img_file)
-            if img.has_exif:
-                metadata['exif'] = img.get_all()  # save all exif tags for use in modules
+            if not load and not metadata:
+                return await f.read()
+            img = await f.read()
+        img_file = BytesIO(img)
+        metadata = {
+            "uri": path,
+            "path": os.path.abspath(path),
+            "file_created": await aiofiles.os.path.getctime(path),
+            "file_modified": await aiofiles.os.path.getmtime(path),
+            "file_size": await aiofiles.os.path.getsize(path),
+        }
+        exif = Exif(img_file)
+        if exif.has_exif:
+            # extract common tags
+            camera = [exif.get('make', None), exif.get('model', None)]
+            camera = list(filter(lambda x: x is not None, camera))
+            if camera:
+                metadata['camera'] = ' '.join(camera)
 
-                # extract common tags
-                camera = []
-                camera.append(img.get('make', None))
-                camera.append(img.get('model', None))
-                camera = list(filter(lambda x: x is not None, camera))
-                if camera:
-                    metadata['camera'] = ' '.join(camera)
+            if dt_str := exif.get('datetime_original', None):
+                metadata['datetime_original'] = datetime.strptime(dt_str, DATETIME_STR_FORMAT)
 
-                if dt_str := img.get('datetime_original', None):
-                    metadata['datetime_original'] = datetime.strptime(dt_str, DATETIME_STR_FORMAT)
+            if dt_str := exif.get('datetime_digitized', None):
+                metadata['datetime_digitized'] = datetime.strptime(dt_str, DATETIME_STR_FORMAT)
 
-                if dt_str := img.get('datetime_digitized', None):
-                    metadata['datetime_digitized'] = datetime.strptime(dt_str, DATETIME_STR_FORMAT)
+            # TODO gps
 
-                # TODO gps
+        img_file.seek(0)
+        loaded = Image.open(img_file)
+        if load:
+            img = loaded
+        metadata['width'] = loaded.width
+        metadata['height'] = loaded.height
+        if 'datetime_original' in metadata:
+            dt = metadata['datetime_original']
+        else:
+            dt = None
 
-            img_file.seek(0)
-            img = Image.open(img_file)
-            metadata['width'] = img.width
-            metadata['height'] = img.height
-            if 'datetime_original' in metadata:
-                dt = metadata['datetime_original']
-            else:
-                dt = None
+        if metadata:
             return img, path, dt, metadata
+        else:
+            return img
 
-    async def get_thumbnail(self, path):
+    async def get_thumbnail(self, path, load=False):
         async with aiofiles.open(path, mode='rb') as f:
             img = Exif(BytesIO(await f.read()))
-            return Image.open(BytesIO(img.get_thumbnail()))
+            if load:
+                return Image.open(BytesIO(img.get_thumbnail()))
+            else:
+                return img.get_thumbnail()
 
     async def rescan(self, *args):
         async def check_file(path):
             new, uid = await self.database.check_image(path)
             if new:
                 try:
-                    image = await self.get_image(path)
+                    image = await self.get_image(path, load=True, metadata=True)
                     await self.bus.emit('new_image', (uid, *image))
                     await self.bus.emit('done', uid)
                 except (PIL.UnidentifiedImageError, plum.exceptions.UnpackError):

@@ -61,11 +61,9 @@ async def image():
     if 'small' in request.args:
         image = await app.config['backend'].get_thumbnail(uri)
     else:
-        image = (await app.config['backend'].get_image(uri))[0]
-    img_io = BytesIO()
-    image.save(img_io, 'JPEG', quality=70)
-    img_io.seek(0)
-    return await send_file(img_io, mimetype='image/jpeg')
+        image = await app.config['backend'].get_image(uri)
+
+    return await send_file(BytesIO(image), mimetype='image/jpeg')
 
 
 @app.route("/tags/")
