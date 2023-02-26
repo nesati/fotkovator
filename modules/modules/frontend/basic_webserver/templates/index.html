@@ -20,6 +20,11 @@
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
 		  rel="stylesheet">
 
+	<!-- Tag input -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css" integrity="sha512-xmGTNt20S0t62wHLmQec2DauG9T+owP9e6VU8GigI0anN7OXLip9i7IwEhelasml2osdxX71XcYm6BQunTQeQg==" crossorigin="anonymous" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.js" integrity="sha512-VvWznBcyBJK71YKEKDMpZ0pCVxjNuKwApp4zLF3ul+CiflQi6aIJR+aZCP/qWsoFBA28avL5T5HA+RE+zrGQYg==" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput-angular.min.js" integrity="sha512-KT0oYlhnDf0XQfjuCS/QIw4sjTHdkefv8rOJY5HHdNEZ6AmOh1DW/ZdSqpipe+2AEXym5D0khNu95Mtmw9VNKg==" crossorigin="anonymous"></script>
+
 	<title>Štítkovátor</title>
 	<style>
 		.grid {
@@ -56,6 +61,11 @@
 			grid-column: span 2;
 			grid-row: span 2;
 		}
+
+        .bootstrap-tagsinput{
+            width: 100%;
+            padding: .375rem .75rem;
+        }
 	</style>
 </head>
 <body>
@@ -63,7 +73,7 @@
 	<a href="/" class="text-dark text-decoration-none"><h1 class="">Štítkovátor</h1></a>
 	<form class="mb-3 row" action="/search">
 		<div class="col">
-			<input type="text" value="{{ querry }}" class="form-control tagAutoComplete" placeholder="Vyhledávání..." aria-label="Vyhledávání" name="tag">
+			<input data-role="tagsinput" type="text" value="{{ querry }}" class="form-control tagAutoComplete w-100" placeholder="Vyhledávání..." aria-label="Vyhledávání" name="tag">
 		</div>
 		<div class="col-3 col-sm-2 col-md-2 col-lg-1 col-xl-1 col-xxl-1">
 			<button type="submit" class="btn btn-primary py-0" style="width: 100%">
@@ -119,14 +129,44 @@
 		integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
 		crossorigin="anonymous"></script>
 <script>
+    let availableTags;
+    const tagInput = $('.tagAutoComplete')
+    tagInput.tagsinput({
+        tagClass: 'badge bg-info',
+    });
+    tagInput.on('itemRemoved', function(event) {
+        availableTags.push(event.item)
+    });
+    $('input').on('beforeItemAdd', function(event) {
+        if (availableTags.indexOf(event.item) < 0) {
+            event.cancel = true
+		}
+    });
 	fetch('/tags').then(r => {
-		r.json().then(availableTags => {
-			$('.tagAutoComplete').autocomplete({
-				source: availableTags
+		r.json().then(fetchedTags => {
+            availableTags = fetchedTags;
+            tagInput.val().split(',').forEach(tag => {
+                let i = availableTags.indexOf(tag)
+                if (i > -1) {
+                    availableTags.splice(i, 1);
+                }
+			});
+            const textInput = $('.bootstrap-tagsinput input')
+            textInput.autocomplete({
+				source: availableTags,
+				select: function(event, ui){
+                	let value = ui.item.value;
+                    tagInput.tagsinput('add', value);
+                	let i = availableTags.indexOf(value);
+                    if (i > -1) {
+                		availableTags.splice(i, 1);
+                    }
+                	event.preventDefault();
+                    textInput.val('');
+            	}
 			});
 		});
 	});
-
 </script>
 </body>
 </html>

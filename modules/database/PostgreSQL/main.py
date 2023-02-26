@@ -1,3 +1,5 @@
+import asyncio
+
 import asyncpg
 
 from utils.json_utils import decoder, encoder
@@ -90,22 +92,40 @@ class PostgreDatabase(Database):
 
         return results
 
-    async def search(self, tagname, **kwargs):
+    async def search(self, tagnames, **kwargs):
         await self.check_database()
 
-        tag_id = await self._get_tag_id(tagname)
+        tag_ids = await asyncio.gather(*map(self._get_tag_id, tagnames))
 
         async with self.pool.acquire() as conn:
-            n_imgs = await conn.fetchval('SELECT COUNT(*) FROM images INNER JOIN tags ON images.uid = tags.uid WHERE tag_id=$1;',
-                                         tag_id)
+            n_imgs = await conn.fetchval("""
+                SELECT COUNT(*)
+                FROM images
+                JOIN tags ON images.uid = tags.uid
+                WHERE tags.tag_id = any($1::int[])
+                GROUP BY images.uid
+                HAVING COUNT(tags.uid) = $2;
+                """, tag_ids, len(tag_ids))
             if 'page' in kwargs:
-                out = await conn.fetch(
-                    'SELECT images.uid, uri, created, metadata, done FROM images INNER JOIN tags ON images.uid = tags.uid WHERE tag_id=$1 ORDER BY created LIMIT $2 OFFSET $3;',
-                    tag_id, kwargs['limit'], kwargs['page'] * kwargs['limit'])
+                out = await conn.fetch("""
+                    SELECT images.uid, uri, created, metadata, done
+                    FROM images
+                    JOIN tags ON images.uid = tags.uid
+                    WHERE tags.tag_id = any($1::int[])
+                    GROUP BY images.uid
+                    HAVING COUNT(tags.uid) = $2
+                    ORDER BY created LIMIT $3 OFFSET $4;
+                    """, tag_ids, len(tag_ids), kwargs['limit'], kwargs['page'] * kwargs['limit'])
             else:
-                out = await conn.fetch(
-                    'SELECT images.uid, uri, created, metadata, done FROM images INNER JOIN tags ON images.uid = tags.uid WHERE tag_id=$1 ORDER BY created;',
-                    tag_id)
+                out = await conn.fetch("""
+                SELECT images.uid, uri, created, metadata, done
+                FROM images
+                JOIN tags ON images.uid = tags.uid
+                WHERE tags.tag_id = any($1::int[])
+                GROUP BY images.uid
+                HAVING COUNT(tags.uid) = $2
+                ORDER BY created;
+                """, tag_ids, len(tag_ids))
 
         # out = list(map(lambda t: dict(zip(('uid', 'time', 'metadata', 'done'), t)), out))
         return out, n_imgs

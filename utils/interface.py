@@ -64,10 +64,10 @@ class Database(Module):
         """
         raise NotImplementedError()
 
-    async def search(self, tagname, **kwargs):
+    async def search(self, tagnames, **kwargs):
         """
         Search images based on tags.
-        :param tagname: str: name of the tag the image must have
+        :param tagnames: list: str: names of the tag the image must have
         :return: list: dict: must contain keys: uid, uri, dt, metadata, done
         """
         raise NotImplementedError()
