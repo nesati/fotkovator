@@ -19,7 +19,7 @@ class Database(Module):
         self.loop = loop
 
         self.bus.add_listener('new_image', lambda i: self.add_image(i[0], *i[2:]))
-        self.bus.add_listener('tag', lambda t: self.add_tag(*t))
+        self.bus.add_listener('tag', lambda t: self.add_tag(*t[0:2], **t[2]))
         self.bus.add_listener('done', self.mark_done)
 
     async def add_image(self, uid, uri, dt, metadata):
@@ -72,11 +72,13 @@ class Database(Module):
         """
         raise NotImplementedError()
 
-    async def add_tag(self, uid, tag):
+    async def add_tag(self, uid, tag, color=None, text_color=None):
         """
         Adds a tag to a given image.
         :param uid: int: The image's identifier
         :param tag: str: Tag name
+        :param color: tuple: (R, G, B) color for the tag, values between 0-1
+        :param text_color: tuple: (R, G, B) color for the tags name, values between 0-1
         """
         raise NotImplementedError()
 

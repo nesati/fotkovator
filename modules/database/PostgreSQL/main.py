@@ -2,6 +2,7 @@ import asyncio
 
 import asyncpg
 
+from utils.color import random_color, rgb2hex, contrast_color
 from utils.json_utils import decoder, encoder
 from utils.interface import Database
 
@@ -41,7 +42,9 @@ class PostgreDatabase(Database):
                     );''')
                     await conn.execute('''CREATE TABLE IF NOT EXISTS tag_names(
                         tag_id serial PRIMARY KEY,
-                         name text UNIQUE NOT NULL
+                        name text UNIQUE NOT NULL,
+                        color text NOT NULL,
+                        text_color text NOT NULL
                     );''')
             except asyncpg.exceptions.UniqueViolationError:  # conflict with other thread
                 await self.check_database()  # retry
@@ -88,7 +91,7 @@ class PostgreDatabase(Database):
 
         async with self.pool.acquire() as conn:
             results = await conn.fetch(
-                'SELECT name FROM tag_names INNER JOIN tags ON tag_names.tag_id = tags.tag_id WHERE uid=$1;', uid)
+                'SELECT * FROM tag_names INNER JOIN tags ON tag_names.tag_id = tags.tag_id WHERE uid=$1;', uid)
 
         return results
 
@@ -147,12 +150,24 @@ class PostgreDatabase(Database):
 
         return result
 
-    async def add_tag(self, uid, tag):
+    async def add_tag(self, uid, tag, color=None, text_color=None):
         await self.check_database()
+
+        assert text_color is None or color is not None, 'must specify color when specifying text_color'
+
         tag_id = await self._get_tag_id(tag)
         if tag_id is None:
+            if color is None:
+                color = random_color()
+
+            if text_color is None:
+                text_color = contrast_color(*color)
+
+            color, text_color = rgb2hex(*color),  rgb2hex(*text_color)
+
             async with self.pool.acquire() as conn:
-                await conn.execute('INSERT INTO tag_names(name) VALUES ($1)', tag)
+                await conn.execute('INSERT INTO tag_names(name, color, text_color) VALUES ($1, $2, $3)', tag, color,
+                                   text_color)
                 tag_id = await self._get_tag_id(tag)
 
         async with self.pool.acquire() as conn:
@@ -172,10 +187,10 @@ class PostgreDatabase(Database):
         await self.check_database()
 
         async with self.pool.acquire() as conn:
-            results = await conn.fetch('SELECT name FROM tag_names;')
+            results = await conn.fetch('SELECT * FROM tag_names;')
 
-        out = list(map(lambda x: x['name'], results))
-        return out
+        results = list(map(lambda x: dict(x), results))
+        return results
 
     async def list_images(self, **kwargs):
         await self.check_database()

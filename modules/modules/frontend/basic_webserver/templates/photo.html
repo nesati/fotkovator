@@ -42,8 +42,8 @@
 		<div class="col">
 			<div class="tags m-2">
 				{% for tag in tags %}
-					<a class="badge rounded-pill text-light text-decoration-none"
-					   style="background: {{ tag.color | safe }};color: {{ tag.textColor | safe }};"
+					<a class="badge rounded-pill text-decoration-none"
+					   style="background: {{ tag.color | safe }};color: {{ tag.text_color | safe }};"
 					   href="/search?tag={{ tag.name | safe }}">
 						<!--img src="clovek.jpg"-->
 						{{ tag.name }}

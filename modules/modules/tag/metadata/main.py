@@ -19,7 +19,7 @@ class MetadataTagger(TagModule):
         if 'path' in img[4]:
             tags, dt = path_analyzer.analyze(img[4]['path'])
             for tag in tags:
-                await self.bus.emit('tag', (img[0], tag))
+                await self.bus.emit('tag', (img[0], tag, {}))
 
         # TODO analyze exif
 

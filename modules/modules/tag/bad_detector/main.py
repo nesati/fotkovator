@@ -30,7 +30,7 @@ class BadTagger(TagModule):
 
     async def tag(self, img):
         if not await self._is_good(img[1]):
-            await self.bus.emit('tag', (img[0], 'bad'))
+            await self.bus.emit('tag', (img[0], 'bad', {'color': (1, .27, .27)}))
 
     async def _is_good(self, img):
         """

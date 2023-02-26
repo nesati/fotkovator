@@ -6,7 +6,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<!-- jQuery -->
-	<script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-3.6.3.min.js"
+			integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
 
 	<!-- jQuery UI -->
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -21,9 +22,16 @@
 		  rel="stylesheet">
 
 	<!-- Tag input -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css" integrity="sha512-xmGTNt20S0t62wHLmQec2DauG9T+owP9e6VU8GigI0anN7OXLip9i7IwEhelasml2osdxX71XcYm6BQunTQeQg==" crossorigin="anonymous" />
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.js" integrity="sha512-VvWznBcyBJK71YKEKDMpZ0pCVxjNuKwApp4zLF3ul+CiflQi6aIJR+aZCP/qWsoFBA28avL5T5HA+RE+zrGQYg==" crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput-angular.min.js" integrity="sha512-KT0oYlhnDf0XQfjuCS/QIw4sjTHdkefv8rOJY5HHdNEZ6AmOh1DW/ZdSqpipe+2AEXym5D0khNu95Mtmw9VNKg==" crossorigin="anonymous"></script>
+	<link rel="stylesheet"
+		  href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css"
+		  integrity="sha512-xmGTNt20S0t62wHLmQec2DauG9T+owP9e6VU8GigI0anN7OXLip9i7IwEhelasml2osdxX71XcYm6BQunTQeQg=="
+		  crossorigin="anonymous"/>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.js"
+			integrity="sha512-VvWznBcyBJK71YKEKDMpZ0pCVxjNuKwApp4zLF3ul+CiflQi6aIJR+aZCP/qWsoFBA28avL5T5HA+RE+zrGQYg=="
+			crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput-angular.min.js"
+			integrity="sha512-KT0oYlhnDf0XQfjuCS/QIw4sjTHdkefv8rOJY5HHdNEZ6AmOh1DW/ZdSqpipe+2AEXym5D0khNu95Mtmw9VNKg=="
+			crossorigin="anonymous"></script>
 
 	<title>Štítkovátor</title>
 	<style>
@@ -62,10 +70,10 @@
 			grid-row: span 2;
 		}
 
-        .bootstrap-tagsinput{
-            width: 100%;
-            padding: .375rem .75rem;
-        }
+		.bootstrap-tagsinput {
+			width: 100%;
+			padding: .375rem .75rem;
+		}
 	</style>
 </head>
 <body>
@@ -73,7 +81,8 @@
 	<a href="/" class="text-dark text-decoration-none"><h1 class="">Štítkovátor</h1></a>
 	<form class="mb-3 row" action="/search">
 		<div class="col">
-			<input data-role="tagsinput" type="text" value="{{ querry }}" class="form-control tagAutoComplete w-100" placeholder="Vyhledávání..." aria-label="Vyhledávání" name="tag">
+			<input data-role="tagsinput" type="text" value="{{ querry }}" class="form-control tagAutoComplete w-100"
+				   placeholder="Vyhledávání..." aria-label="Vyhledávání" name="tag">
 		</div>
 		<div class="col-3 col-sm-2 col-md-2 col-lg-1 col-xl-1 col-xxl-1">
 			<button type="submit" class="btn btn-primary py-0" style="width: 100%">
@@ -83,39 +92,41 @@
 	</form>
 	<div class="grid">
 		{% for image in images %}
-		<!-- image -->
-		<a class="grid-image {% if image.big %}big{% endif %} position-relative p-0" href="/detail?uid={{ image.uid | safe }}">
-			<div class="ratio ratio-1x1 rounded p-0"
-				 style='background-image: url("/img?uid={{ image.uid | safe }}{% if not image.big %}&small{% endif %}");background-size: cover;background-position: center;'>
-			</div>
-			{% if not image.done %}
-			<!-- processing image -->
-			<div class="p-2 position-absolute bottom-0 start-0">
-				<div class="spinner-border text-light" role="status">
-					<span class="visually-hidden">Processing...</span>
+			<!-- image -->
+			<a class="grid-image {% if image.big %}big{% endif %} position-relative p-0"
+			   href="/detail?uid={{ image.uid | safe }}">
+				<div class="ratio ratio-1x1 rounded p-0"
+					 style='background-image: url("/img?uid={{ image.uid | safe }}{% if not image.big %}&small{% endif %}");background-size: cover;background-position: center;'>
 				</div>
-			</div>
-			{% endif %}
-		</a>
+				{% if not image.done %}
+					<!-- processing image -->
+					<div class="p-2 position-absolute bottom-0 start-0">
+						<div class="spinner-border text-light" role="status">
+							<span class="visually-hidden">Processing...</span>
+						</div>
+					</div>
+				{% endif %}
+			</a>
 		{% endfor %}
 	</div>
 	<nav aria-label="Page navigation" class="p-3">
 		<ul class="pagination justify-content-center">
 			<li class="page-item">
-				<a class="page-link" href="{{ request.path }}?tag={{querry | urlencode}}&p=0" aria-label="First">
+				<a class="page-link" href="{{ request.path }}?tag={{ querry | urlencode }}&p=0" aria-label="First">
 					<span aria-hidden="true">&laquo;</span>
 					<span class="sr-only">First</span>
 				</a>
 			</li>
 			{% for i in range(page - 3, page + 4) %}
 				{% if i >= 0 and i < n_pages %}
-				<li class="page-item {% if i == page %}active{% endif %} {%if i == page - 3 or i == page + 3 %}d-none d-md-block{% endif %}">
-					<a class="page-link" href="{{ request.path }}?tag={{querry | urlencode}}&p={{ i | safe}}">{{ i }}</a>
-				</li>
+					<li class="page-item {% if i == page %}active{% endif %} {% if i == page - 3 or i == page + 3 %}d-none d-md-block{% endif %}">
+						<a class="page-link"
+						   href="{{ request.path }}?tag={{ querry | urlencode }}&p={{ i | safe }}">{{ i }}</a>
+					</li>
 				{% endif %}
 			{% endfor %}
 			<li class="page-item">
-				<a class="page-link" href="{{ request.path }}?tag={{querry | urlencode}}&p={{ (n_pages - 1) | safe}}" aria-label="Last">
+				<a class="page-link" href="{{ request.path }}?tag={{ querry | urlencode }}&p={{ (n_pages - 1) | safe }}" aria-label="Last">
 					<span class="sr-only">Last</span>
 					<span aria-hidden="true">&raquo;</span>
 				</a>
@@ -129,41 +140,62 @@
 		integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
 		crossorigin="anonymous"></script>
 <script>
-    let availableTags;
-    const tagInput = $('.tagAutoComplete')
-    tagInput.tagsinput({
-        tagClass: 'badge bg-info',
-    });
-    tagInput.on('itemRemoved', function(event) {
-        availableTags.push(event.item)
-    });
-    $('input').on('beforeItemAdd', function(event) {
-        if (availableTags.indexOf(event.item) < 0) {
-            event.cancel = true
+	let availableTags;
+	let tagColors = {}
+	const tagInput = $('.tagAutoComplete');
+	tagInput.tagsinput({
+		tagClass: 'badge rounded-pill',
+	});
+	tagInput.on('itemRemoved', function (event) {
+		availableTags.push(event.item)
+	});
+	tagInput.on('beforeItemAdd', function (event) {
+		if (availableTags.indexOf(event.item) < 0) {
+			event.cancel = true
 		}
-    });
+	});
+	tagInput.on('beforeItemAdd', function (event) {
+		if (availableTags.indexOf(event.item) < 0) {
+			event.cancel = true
+		}
+	});
+
+	function refreshColors(e) {
+		Array.prototype.forEach.call($('.bootstrap-tagsinput span.tag'), el => {
+			let tag = tagColors[el.innerText];
+			el.style.color = tag.text_color;
+			el.style.backgroundColor = tag.color;
+		});
+	}
+
+	tagInput.on('itemAdded', refreshColors);
+	tagInput.on('itemAddedOnInit', refreshColors);
 	fetch('/tags').then(r => {
 		r.json().then(fetchedTags => {
-            availableTags = fetchedTags;
-            tagInput.val().split(',').forEach(tag => {
-                let i = availableTags.indexOf(tag)
-                if (i > -1) {
-                    availableTags.splice(i, 1);
-                }
+			availableTags = fetchedTags.map(x => x.name);
+			fetchedTags.forEach(tag => {
+				tagColors[tag.name] = tag;
 			});
-            const textInput = $('.bootstrap-tagsinput input')
-            textInput.autocomplete({
+			refreshColors({});
+			tagInput.val().split(',').forEach(tag => {
+				let i = availableTags.indexOf(tag)
+				if (i > -1) {
+					availableTags.splice(i, 1);
+				}
+			});
+			const textInput = $('.bootstrap-tagsinput input')
+			textInput.autocomplete({
 				source: availableTags,
-				select: function(event, ui){
-                	let value = ui.item.value;
-                    tagInput.tagsinput('add', value);
-                	let i = availableTags.indexOf(value);
-                    if (i > -1) {
-                		availableTags.splice(i, 1);
-                    }
-                	event.preventDefault();
-                    textInput.val('');
-            	}
+				select: function (event, ui) {
+					let value = ui.item.value;
+					tagInput.tagsinput('add', value);
+					let i = availableTags.indexOf(value);
+					if (i > -1) {
+						availableTags.splice(i, 1);
+					}
+					event.preventDefault();
+					textInput.val('');
+				}
 			});
 		});
 	});
