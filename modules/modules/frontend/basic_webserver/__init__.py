@@ -7,7 +7,7 @@ from utils.interface import Frontend
 class Module(Frontend):
     def __init__(self, bus, database, backend, loop, config):
         super().__init__(bus, database, backend, loop)
-        self.shutdown = asyncio.Event(loop=loop)
+        self.shutdown = asyncio.Event()
         self.port = config.get('port', 5000)
         self.host = config.get('host', '127.0.0.1')
 

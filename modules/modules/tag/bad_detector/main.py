@@ -26,7 +26,7 @@ class BadTagger(TagModule):
 
         self.model_path = config.get('model_path', os.path.dirname(__file__)+'/model.pth')
         self.model = None
-        self.model_loaded = asyncio.Event(loop=loop)
+        self.model_loaded = asyncio.Event()
 
     async def tag(self, img):
         if not await self._is_good(img[1]):
