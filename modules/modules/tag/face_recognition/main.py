@@ -1,4 +1,4 @@
-import multiprocessing
+import concurrent.futures
 
 import face_recognition
 import numpy as np
@@ -6,9 +6,8 @@ from sklearn.cluster import AgglomerativeClustering
 
 from utils.interface import TagModule
 
-
-def face_encodings(img, q):
-    q.put(face_recognition.face_encodings(img))
+# create a process pool executor
+executor = concurrent.futures.ProcessPoolExecutor()
 
 
 class FaceTagger(TagModule):
@@ -19,12 +18,8 @@ class FaceTagger(TagModule):
         self.bus.add_listener('scan_done', lambda *args: self.group())
 
     async def tag(self, img):
-        # a hacky workaround to fix segfault when face_recognition.face_encodings is run directly in executor
-        q = multiprocessing.Queue()
-        proc = multiprocessing.Process(target=face_encodings, args=(np.array(img[1]), q))
-        proc.start()
-        await self.loop.run_in_executor(None, proc.join)  # non-blocking wait for process to finish
-        for encoding in q.get():
+        # the face_recognition.face_encodings must be run in a process executor as it is not thread safe
+        for encoding in await self.loop.run_in_executor(executor, face_recognition.face_encodings, np.array(img[1])):
             self.embeddings.append((img[0], encoding))
 
     async def group(self):
