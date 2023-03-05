@@ -109,6 +109,10 @@ class PostgreDatabase(Database):
                 GROUP BY images.uid
                 HAVING COUNT(tags.uid) = $2;
                 """, tag_ids, len(tag_ids))
+
+            if n_imgs is None:
+                n_imgs = 0
+
             if 'page' in kwargs:
                 out = await conn.fetch("""
                     SELECT images.uid, uri, created, metadata, done
@@ -197,6 +201,10 @@ class PostgreDatabase(Database):
 
         async with self.pool.acquire() as conn:
             n_imgs = await conn.fetchval('SELECT COUNT(*) FROM images;')
+
+            if n_imgs is None:
+                n_imgs = 0
+
             if 'page' in kwargs:
                 results = await conn.fetch('SELECT * FROM images ORDER BY created LIMIT $1 OFFSET $2;', kwargs['limit'],
                                            kwargs['page'] * kwargs['limit'])
