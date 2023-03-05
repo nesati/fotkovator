@@ -103,11 +103,14 @@ class PostgreDatabase(Database):
         async with self.pool.acquire() as conn:
             n_imgs = await conn.fetchval("""
                 SELECT COUNT(*)
-                FROM images
-                JOIN tags ON images.uid = tags.uid
-                WHERE tags.tag_id = any($1::int[])
-                GROUP BY images.uid
-                HAVING COUNT(tags.uid) = $2;
+                FROM (
+                    SELECT images.uid
+                    FROM images
+                    JOIN tags ON images.uid = tags.uid
+                    WHERE tags.tag_id = any($1::int[])
+                    GROUP BY images.uid
+                    HAVING COUNT(tags.uid) = $2
+                ) AS subquery;
                 """, tag_ids, len(tag_ids))
 
             if n_imgs is None:
