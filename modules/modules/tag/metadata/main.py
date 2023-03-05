@@ -21,7 +21,9 @@ class MetadataTagger(TagModule):
             for tag in tags:
                 await self.bus.emit('tag', (img[0], tag, {}))
 
-        # TODO analyze exif
+        # analyze exif
+        if 'camera' in img[4]:
+            await self.bus.emit('tag', (img[0], img[4]['camera'], {}))
 
         # analyze datetime
         if not img[3]:  # if the datetime was not taken from exif
@@ -40,3 +42,6 @@ class MetadataTagger(TagModule):
                 dt = min(dts)  # select oldest as it is most likely to be correct
 
             await self.bus.emit('dt', (img[1], dt))
+
+        # add tag with datetime
+        await self.bus.emit('tag', (img[0], (img[3] or dt).strftime('%-d. %-m. %Y'), {'color': (.75, .75, .75)}))
