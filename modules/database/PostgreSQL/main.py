@@ -133,7 +133,7 @@ class PostgreDatabase(Database):
                     WHERE tags.tag_id = any($1::int[])
                     GROUP BY images.uid
                     HAVING COUNT(tags.uid) = $2
-                    ORDER BY created LIMIT $3 OFFSET $4;
+                    ORDER BY created DESC LIMIT $3 OFFSET $4;
                     """, tag_ids, len(tag_ids), kwargs['limit'], kwargs['page'] * kwargs['limit'])
             else:
                 out = await conn.fetch("""
@@ -143,7 +143,7 @@ class PostgreDatabase(Database):
                 WHERE tags.tag_id = any($1::int[])
                 GROUP BY images.uid
                 HAVING COUNT(tags.uid) = $2
-                ORDER BY created;
+                ORDER BY created DESC;
                 """, tag_ids, len(tag_ids))
 
         # out = list(map(lambda t: dict(zip(('uid', 'time', 'metadata', 'done'), t)), out))
@@ -218,10 +218,10 @@ class PostgreDatabase(Database):
                 n_imgs = 0
 
             if 'page' in kwargs:
-                results = await conn.fetch('SELECT * FROM images ORDER BY created LIMIT $1 OFFSET $2;', kwargs['limit'],
+                results = await conn.fetch('SELECT * FROM images ORDER BY created DESC LIMIT $1 OFFSET $2;', kwargs['limit'],
                                            kwargs['page'] * kwargs['limit'])
             else:
-                results = await conn.fetch('SELECT * FROM images ORDER BY created;')
+                results = await conn.fetch('SELECT * FROM images ORDER BY created DESC;')
 
         return results, n_imgs
 
