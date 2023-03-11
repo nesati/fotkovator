@@ -1,5 +1,8 @@
 class Module:
     def run_forever(self):
+        """
+        Main process of the module.
+        """
         return None
 
 
@@ -188,4 +191,8 @@ class TagModule(BasicModule):
         self.bus.add_listener('new_image', self.tag)
 
     def tag(self, img):
+        """
+        Analyze image.
+        :param img: (img, uid, uri, dt, metadata)
+        """
         raise NotImplementedError('TagModule must implement tag function')

@@ -195,7 +195,10 @@ Možnosti rozšíření kompatibilní se současným modulárním systémem.
 - Moduly nahrazující fotky
   - Kolorizace černobílých fotek
   - Koprese
-- [CLIP](https://openai.com/blog/clip/) vyhledávání
+- Automatické kombinování podobných fotek
+  - live photos
+  - HDR
+- [CLIP](https://openai.com/blog/clip/) vyhledávání viz [clip-retrieval](https://github.com/rom1504/clip-retrieval)
 
 ## Credits
 
