@@ -79,7 +79,7 @@ class LocalfsBackend(Backend):
             if new:
                 try:
                     image = await self.get_image(path, load=True, metadata=True)
-                    await self.bus.emit('new_image', (uid, *image))
+                    await self.bus.emit('new_image', (uid, asyncio.Event(), *image))
                     await self.bus.emit('done', uid)
                 except (PIL.UnidentifiedImageError, plum.exceptions.UnpackError):
                     pass

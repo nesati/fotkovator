@@ -50,3 +50,18 @@ Oznamuje systému, že proběhne kontrola zdroje obrázků. Událost má dva arg
 
 Oznamuje, že daný obrázek už není ve zdroji obrázků.
 1. uid obrázku
+
+### `new_image`
+
+Oznamuje, že byl nalezen nový obrázek.
+
+1. `uid` - identifikátor obrázku v databázi
+2. `asyncio.Event` - Databáze připravená
+   - databáze spouští tuto událost jakmile jsou provedeny potřebné akce pro přijetí dalších akcí na obrázku (např.: přidání štítku)
+   - ostatní moduly čekají na tuto událost je-li to nutné
+3. `PIL.Image` - Obrázek samotný
+   - určen pro štítkovací moduly
+4. `uri` - identifikátor obrázku ve zroji obrázků
+5. `datetime.datetime` nebo `None` - datum a čas vzniku obrázku
+6. `dict` - metadata získaná zdrojem
+   - žádný klíč není zaručený

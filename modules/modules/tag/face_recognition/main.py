@@ -17,10 +17,12 @@ class FaceTagger(TagModule):
         self.embeddings = []
         self.bus.add_listener('scan_done', lambda *args: self.group())
 
-    async def tag(self, img):
+    async def tag(self, uid, db_ready, img, uri, crated, metadata):
         # the face_recognition.face_encodings must be run in a process executor as it is not thread safe
-        for encoding in await self.loop.run_in_executor(executor, face_recognition.face_encodings, np.array(img[1])):
-            self.embeddings.append((img[0], encoding))
+        for encoding in await self.loop.run_in_executor(executor, face_recognition.face_encodings, np.array(img)):
+            self.embeddings.append((uid, encoding))
+
+        await db_ready.wait()  # block scan_done event until database ready
 
     async def group(self):
         """

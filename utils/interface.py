@@ -22,16 +22,17 @@ class Database(Module):
         self.bus = bus
         self.loop = loop
 
-        self.bus.add_listener('new_image', lambda i: self.add_image(i[0], *i[2:]))
+        self.bus.add_listener('new_image', lambda i: self.add_image(*i[0:2]+i[3:]))
         self.bus.add_listener('tag', lambda t: self.add_tag(*t[0:2], **t[2]))
         self.bus.add_listener('done', self.mark_done)
         self.bus.add_listener('rescan', lambda args: self.rescan(*args))
         self.bus.add_listener('img_removed', self.remove_image)
 
-    async def add_image(self, uid, uri, dt, metadata):
+    async def add_image(self, uid, db_ready, uri, dt, metadata):
         """
         Creates a record for a given image in the database.
         :param uid: int: The image's identifier
+        :param db_ready: asyncio.Event signifying whether the database is ready for actions on image
         :param uri: str: The image's backend identifier
         :param dt: datetime of the image's creation
         :param metadata: dict: additional information about the image
@@ -188,11 +189,16 @@ class TagModule(BasicModule):
     def __init__(self, bus, database, backend, loop):
         super().__init__(bus, database, backend, loop)
 
-        self.bus.add_listener('new_image', self.tag)
+        self.bus.add_listener('new_image', lambda img: self.tag(*img))
 
-    def tag(self, img):
+    def tag(self, uid, db_ready, img, uri, dt, metadata):
         """
         Analyze image.
-        :param img: (img, uid, uri, dt, metadata)
+        :param uid: int: The image's identifier
+        :param db_ready: asyncio.Event signifying whether the database is ready for actions on image
+        :param img: PIL.Image: The image itself
+        :param uri: str: The image's backend identifier
+        :param dt: datetime of the image's creation
+        :param metadata: dict: additional information about the image
         """
         raise NotImplementedError('TagModule must implement tag function')

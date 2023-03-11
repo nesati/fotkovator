@@ -33,33 +33,38 @@ class PostgreDatabase(Database):
                 metadata json NOT NULL,
                 done boolean NOT NULL 
             );''')
-            await conn.execute('''CREATE TABLE IF NOT EXISTS tags(
-                uid integer NOT NULL,
-                tag_id integer NOT NULL
-            );''')
             await conn.execute('''CREATE TABLE IF NOT EXISTS tag_names(
                 tag_id serial PRIMARY KEY,
                 name text UNIQUE NOT NULL,
                 color text NOT NULL,
                 text_color text NOT NULL
             );''')
+            await conn.execute('''CREATE TABLE IF NOT EXISTS tags(
+                uid integer REFERENCES images(uid) ON UPDATE CASCADE ON DELETE CASCADE,
+                tag_id integer REFERENCES tag_names(tag_id) ON UPDATE CASCADE ON DELETE CASCADE,
+                CONSTRAINT image_tag_pkey PRIMARY KEY (uid, tag_id)
+            );''')
 
         self.db_ready.set()
 
-    async def add_image(self, uid, uri, dt, metadata):
+    async def add_image(self, uid, db_ready, uri, dt, metadata):
         await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             await conn.set_type_codec('json', encoder=encoder, decoder=decoder, schema='pg_catalog')
-            await conn.execute('INSERT INTO images(uid, uri, created, metadata, done) VALUES ($1, $2, $3, $4, false);',
-                               uid, uri, dt, metadata)
+            try:
+                await conn.execute('INSERT INTO images(uid, uri, created, metadata, done) VALUES ($1, $2, $3, $4, false);',
+                                   uid, uri, dt, metadata)
+            except asyncpg.exceptions.UniqueViolationError:  # already created in previous session but not done
+                pass
+
+        db_ready.set()
 
     async def remove_image(self, uid):
         await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             await conn.execute('DELETE FROM images WHERE uid=$1;', uid)
-            await conn.execute('DELETE FROM tags WHERE uid=$1;', uid)
 
     async def check_image(self, uri):
         await self.db_ready.wait()
@@ -176,12 +181,19 @@ class PostgreDatabase(Database):
             color, text_color = rgb2hex(*color), rgb2hex(*text_color)
 
             async with self.pool.acquire() as conn:
-                await conn.execute('INSERT INTO tag_names(name, color, text_color) VALUES ($1, $2, $3)', tag, color,
-                                   text_color)
-                tag_id = await self._get_tag_id(tag)
+                try:
+                    await conn.execute('INSERT INTO tag_names(name, color, text_color) VALUES ($1, $2, $3)', tag, color,
+                                       text_color)
+                except asyncpg.exceptions.UniqueViolationError:  # already created in another thread
+                    pass
+            tag_id = await self._get_tag_id(tag)
 
         async with self.pool.acquire() as conn:
-            await conn.execute('INSERT INTO tags VALUES ($1, $2)', uid, tag_id)
+            try:
+                await conn.execute('INSERT INTO tags VALUES ($1, $2)', uid, tag_id)
+            except asyncpg.exceptions.UniqueViolationError:
+                # duplicate tags not allowed. Probably partially tagged, interrupted than re-tagged
+                pass
 
     async def remove_tag(self, uid, tag):
         await self.db_ready.wait()
@@ -222,9 +234,8 @@ class PostgreDatabase(Database):
     async def reset_db(self):
         await self.db_ready.wait()
         async with self.pool.acquire() as conn:
-            await conn.execute('TRUNCATE TABLE images;')
-            await conn.execute('TRUNCATE TABLE tags;')
-            await conn.execute('TRUNCATE TABLE tag_names;')
+            await conn.execute('DELETE FROM images;')
+            await conn.execute('DELETE FROM tags;')
 
     def run_forever(self):
         return self.check_database()
