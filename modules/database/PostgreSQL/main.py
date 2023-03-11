@@ -19,36 +19,35 @@ class PostgreDatabase(Database):
         self.port = config.get('port', None)
         self.pool = None
         self.last_commit = 0
+        self.db_ready = asyncio.Event()
 
     async def check_database(self):
-        if self.pool is None:
-            self.pool = await asyncpg.create_pool(user=self.user, password=self.password, database=self.database,
-                                                  host=self.host, port=self.port)
+        self.pool = await asyncpg.create_pool(user=self.user, password=self.password, database=self.database,
+                                              host=self.host, port=self.port)
 
-            try:
-                async with self.pool.acquire() as conn:
-                    await conn.execute('''CREATE TABLE IF NOT EXISTS images (
-                        uid serial PRIMARY KEY,
-                        uri text UNIQUE NOT NULL,
-                        created timestamp,
-                        metadata json NOT NULL,
-                        done boolean NOT NULL 
-                    );''')
-                    await conn.execute('''CREATE TABLE IF NOT EXISTS tags(
-                        uid integer NOT NULL,
-                        tag_id integer NOT NULL
-                    );''')
-                    await conn.execute('''CREATE TABLE IF NOT EXISTS tag_names(
-                        tag_id serial PRIMARY KEY,
-                        name text UNIQUE NOT NULL,
-                        color text NOT NULL,
-                        text_color text NOT NULL
-                    );''')
-            except asyncpg.exceptions.UniqueViolationError:  # conflict with other thread
-                await self.check_database()  # retry
+        async with self.pool.acquire() as conn:
+            await conn.execute('''CREATE TABLE IF NOT EXISTS images (
+                uid serial PRIMARY KEY,
+                uri text UNIQUE NOT NULL,
+                created timestamp,
+                metadata json NOT NULL,
+                done boolean NOT NULL 
+            );''')
+            await conn.execute('''CREATE TABLE IF NOT EXISTS tags(
+                uid integer NOT NULL,
+                tag_id integer NOT NULL
+            );''')
+            await conn.execute('''CREATE TABLE IF NOT EXISTS tag_names(
+                tag_id serial PRIMARY KEY,
+                name text UNIQUE NOT NULL,
+                color text NOT NULL,
+                text_color text NOT NULL
+            );''')
+
+        self.db_ready.set()
 
     async def add_image(self, uid, uri, dt, metadata):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             await conn.set_type_codec('json', encoder=encoder, decoder=decoder, schema='pg_catalog')
@@ -56,14 +55,14 @@ class PostgreDatabase(Database):
                                uid, uri, dt, metadata)
 
     async def remove_image(self, uid):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             await conn.execute('DELETE FROM images WHERE uid=$1;', uid)
             await conn.execute('DELETE FROM tags WHERE uid=$1;', uid)
 
     async def check_image(self, uri):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             row = await conn.fetchrow('SELECT uid, done FROM images WHERE uri=$1;', uri)
@@ -75,7 +74,7 @@ class PostgreDatabase(Database):
         return row is None or not row['done'], uid
 
     async def get_image(self, uid):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             uri = await conn.fetchrow('SELECT uri FROM images WHERE uid=$1;', uid)
@@ -83,7 +82,7 @@ class PostgreDatabase(Database):
         return uri
 
     async def get_info(self, uid):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             await conn.set_type_codec('json', encoder=encoder, decoder=decoder, schema='pg_catalog')
@@ -92,7 +91,7 @@ class PostgreDatabase(Database):
         return row
 
     async def get_tags(self, uid):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             results = await conn.fetch(
@@ -101,7 +100,7 @@ class PostgreDatabase(Database):
         return results
 
     async def search(self, tagnames, **kwargs):
-        await self.check_database()
+        await self.db_ready.wait()
 
         tag_ids = await asyncio.gather(*map(self._get_tag_id, tagnames))
 
@@ -145,13 +144,13 @@ class PostgreDatabase(Database):
         return out, n_imgs
 
     async def mark_done(self, uid):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             await conn.execute('UPDATE images SET done=true WHERE uid=$1;', uid)
 
     async def _get_tag_id(self, tag):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             result = await conn.fetchrow('SELECT tag_id FROM tag_names WHERE name=$1;', tag)
@@ -162,7 +161,7 @@ class PostgreDatabase(Database):
         return result
 
     async def add_tag(self, uid, tag, color=None, text_color=None):
-        await self.check_database()
+        await self.db_ready.wait()
 
         assert text_color is None or color is not None, 'must specify color when specifying text_color'
 
@@ -185,7 +184,7 @@ class PostgreDatabase(Database):
             await conn.execute('INSERT INTO tags VALUES ($1, $2)', uid, tag_id)
 
     async def remove_tag(self, uid, tag):
-        await self.check_database()
+        await self.db_ready.wait()
 
         tag_id = await self._get_tag_id(tag)
         if tag_id is None:
@@ -195,7 +194,7 @@ class PostgreDatabase(Database):
             await conn.execute('DELETE FROM tags WHERE uid=$1 AND tag_id=$2;', uid, tag_id)
 
     async def list_tags(self):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             results = await conn.fetch('SELECT * FROM tag_names;')
@@ -204,7 +203,7 @@ class PostgreDatabase(Database):
         return results
 
     async def list_images(self, **kwargs):
-        await self.check_database()
+        await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
             n_imgs = await conn.fetchval('SELECT COUNT(*) FROM images;')
@@ -221,7 +220,7 @@ class PostgreDatabase(Database):
         return results, n_imgs
 
     async def reset_db(self):
-        await self.check_database()
+        await self.db_ready.wait()
         async with self.pool.acquire() as conn:
             await conn.execute('TRUNCATE TABLE images;')
             await conn.execute('TRUNCATE TABLE tags;')
@@ -231,5 +230,5 @@ class PostgreDatabase(Database):
         return self.check_database()
 
     async def stop(self):
-        await self.check_database()
+        await self.db_ready.wait()
         await self.pool.close()
