@@ -3,7 +3,6 @@ import json
 import math
 from io import BytesIO
 
-from PIL import ImageOps
 from quart import Quart, render_template, request, send_file, Response
 
 app = Quart(__name__)
@@ -67,6 +66,7 @@ async def image():
     return await send_file(BytesIO(image), mimetype='image/jpeg')
 
 
+# API calls
 @app.route("/tags/")
 async def tags():
     tags = await app.config['database'].list_tags()

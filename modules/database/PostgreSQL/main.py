@@ -6,8 +6,6 @@ from utils.color import random_color, rgb2hex, contrast_color
 from utils.json_utils import decoder, encoder
 from utils.interface import Database
 
-COMMIT_INTERVAL = 60
-
 
 class PostgreDatabase(Database):
     def __init__(self, bus, loop, config):
@@ -54,8 +52,8 @@ class PostgreDatabase(Database):
 
         async with self.pool.acquire() as conn:
             await conn.set_type_codec('json', encoder=encoder, decoder=decoder, schema='pg_catalog')
-            await conn.execute('INSERT INTO images(uid, uri, created, metadata, done) VALUES ($1, $2, $3, $4, false);', uid, uri, dt,
-                               metadata)
+            await conn.execute('INSERT INTO images(uid, uri, created, metadata, done) VALUES ($1, $2, $3, $4, false);',
+                               uid, uri, dt, metadata)
 
     async def remove_image(self, uid):
         await self.check_database()
@@ -63,8 +61,6 @@ class PostgreDatabase(Database):
         async with self.pool.acquire() as conn:
             await conn.execute('DELETE FROM images WHERE uid=$1;', uid)
             await conn.execute('DELETE FROM tags WHERE uid=$1;', uid)
-
-
 
     async def check_image(self, uri):
         await self.check_database()
@@ -146,7 +142,6 @@ class PostgreDatabase(Database):
                 ORDER BY created DESC;
                 """, tag_ids, len(tag_ids))
 
-        # out = list(map(lambda t: dict(zip(('uid', 'time', 'metadata', 'done'), t)), out))
         return out, n_imgs
 
     async def mark_done(self, uid):
@@ -179,7 +174,7 @@ class PostgreDatabase(Database):
             if text_color is None:
                 text_color = contrast_color(*color)
 
-            color, text_color = rgb2hex(*color),  rgb2hex(*text_color)
+            color, text_color = rgb2hex(*color), rgb2hex(*text_color)
 
             async with self.pool.acquire() as conn:
                 await conn.execute('INSERT INTO tag_names(name, color, text_color) VALUES ($1, $2, $3)', tag, color,
@@ -218,8 +213,8 @@ class PostgreDatabase(Database):
                 n_imgs = 0
 
             if 'page' in kwargs:
-                results = await conn.fetch('SELECT * FROM images ORDER BY created DESC LIMIT $1 OFFSET $2;', kwargs['limit'],
-                                           kwargs['page'] * kwargs['limit'])
+                results = await conn.fetch('SELECT * FROM images ORDER BY created DESC LIMIT $1 OFFSET $2;',
+                                           kwargs['limit'], kwargs['page'] * kwargs['limit'])
             else:
                 results = await conn.fetch('SELECT * FROM images ORDER BY created DESC;')
 
