@@ -1,6 +1,6 @@
 # Fotkovátor
 
-Fotkovátor je modulární systém na automatické štítkování fotek napsaný v Pythonu.
+Fotkovátor je modulární systém na automatické štítkování fotek napsaný v Pythonu. Tento dokument obsahuje informace o instalaci a konfiguraci pro uživatele. Hledáte-li objasnění technických detailů nebo [návod na tvorbu modulu](TECHNICAL_DOCS.md#tvorba-modulu), najdete je v [technické dokumentaci](TECHNICAL_DOCS.md).
 
 ## Instalace
 
@@ -10,7 +10,7 @@ Pro jakoukoliv instalaci je nejprve potřeba [Python](https://www.python.org/) 3
 pip intall -r requirements.txt
 ```
 
-Další kroky se odvíjejí od zvolených [modulů](#Konfigurace-modulů). Většinou však stačí:
+Další kroky se odvíjejí od zvolených [modulů](#konfigurace-modulů). Většinou však stačí:
 
 ```shell
 pip intall -r modules/<cesta k modulu>/requirements.txt
@@ -55,12 +55,19 @@ Program okamžitě začne zpracovávat fotky z nakonfigurovaného zdroje. Způso
 
 ### Lokální soubory
 
-Přístup k lokálním souborům je umožněn modulem `localfs`.
+Přístup k lokálním souborům je umožněn modulem `localfs`. Periodicky kontroluje změny v souborovém systému.
+
+#### Instalace
+
+```shell
+pip install -r modules/backend/localfs/requirements.txt
+```
 
 #### Argumenty
 
-`path` - *Povinný* Cesta ke složce s obrázky.
+`path` - (povinný) Cesta ke složce s obrázky
 
+`max_concurency` - (volitelný, výchozí: 16) Počet fotek které analyzovat současně
 
 #### Příklad konfigurace
 
@@ -68,6 +75,108 @@ Přístup k lokálním souborům je umožněn modulem `localfs`.
 backend:
   module: localfs
   path: './photos'
+```
+
+### PostgreSQL
+
+PostgreSQL klient implementuje modul `PostgreSQL`. Vyžaduje externí [PostgreSQL](https://www.postgresql.org/) server.
+
+#### Instalace
+
+Závislosti klienta lze nainstalovat přes `pip`.
+
+```shell
+pip install -r modules/database/PostgreSQL/requirements.txt
+```
+
+Je nutné nainstalovat také server. Například přes [docker](https://www.docker.com/):
+
+```shell
+docker run --name fotkovatordb -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_USER=fotkovator -d postgres
+```
+
+#### Argumenty
+
+`user` - (volitelný, výchozí: fotkovator)
+
+`password` - (volitelný, výchozí: proměnná prostředí `PGPASSWORD`) heslo do databáze
+
+`host` - (volitelný, výchozí: localhost) ip nebo hostname postgres serveru
+
+`port` - (volitelný, výchozí: proměnná prostředí `PGPORT`, nebo `5432` není-li definovaná)
+
+`database` - (volitelný, výchozí: fotkovator) název databáze ve které fotkovátor ukládá data
+
+#### Příklad konfigurace
+
+```yaml
+database:
+  module: PostgreSQL
+  password: mysecretpassword
+```
+
+### Rozpoznání obličejů
+
+Modul `face_recognition` poskytuje wrapper na knihovnu [`face-recognition`](https://pypi.org/project/face-recognition/). Modul nepřiřazuje lidem jména, ale snaží se přiřadit stejnému člověku stejný štítek (např.: Osoba 1).
+
+#### Instalace
+
+```shell
+pip install -r modules/modules/tag/face_recognition/requirements.txt
+```
+
+Je doporučené používat `dlib` z anacondy.
+
+```shell
+conda install -c conda-forge dlib
+```
+
+#### Příklad konfigurace
+
+```yaml
+modules:
+  - module: tag.face_recognition
+```
+
+### Webové uživatelské rozhraní
+
+Jednoduchý způsob jak přistupovat k Fotkovátoru je přes webový prohlížeč. Webový server implementuje modul `basic_webserver`. Pokud nezměníte konfiguraci stačí po zapnutí fotkovátoru navštívit [localhost:5000](http://localhost:5000).
+
+#### Instalace
+
+```shell
+pip install -r modules/modules/frontend/basic_webserver/requirements.txt 
+```
+
+#### Argumenty
+
+`port` - (volitelný, výchozí: 5000) port na kterém poslouchat
+
+`host` - (volitelný, výchozí: localhost) interface kde poslouchat
+
+#### Příklad konfigurace
+
+```yaml
+modules:
+  - module: frontend.basic_webserver
+    port: 8080 # příklad změny portu
+```
+
+### Zpracování metadat
+
+Modul `metadata` přidává štítky na zákldě informací, které nejsou obsaženy v obraze samotném. Například datum pořízení obrázku, složky ve kterých se nachází, název fotoaparátu atd.
+
+#### Instalace
+
+```shell
+pip install -r modules/modules/tag/metadata/requirements.txt
+```
+
+#### Příklad konfigurace
+
+```yaml
+modules:
+  - module: tag.metadata
 ```
 
 ## Možnosti rozšíření

@@ -9,7 +9,7 @@ class Module(Frontend):
         super().__init__(bus, database, backend, loop)
         self.shutdown = asyncio.Event()
         self.port = config.get('port', 5000)
-        self.host = config.get('host', '127.0.0.1')
+        self.host = config.get('host', 'localhost')
 
         self.bus.add_listener('stop', self.stop)
 

@@ -36,5 +36,5 @@ class FaceTagger(TagModule):
         ).fit(X)
 
         for uid, label in zip(map(lambda x: x[0], self.embeddings), clustering.labels_):
-            await self.bus.emit('tag', (uid, f'Person {label}', {}))
+            await self.bus.emit('tag', (uid, f'Osoba {label}', {}))
         self.embeddings = []  # delete unnecessary data and prepare for next scan
