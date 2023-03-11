@@ -4,8 +4,8 @@ backend:
   max_concurrency: 16
 
 database:
-  module: sqlite
-  path: './photos.db'
+  module: PostgreSQL
+  password: mysecretpassword
 
 modules:
   - module: tag.metadata
