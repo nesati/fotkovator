@@ -9,6 +9,7 @@ class Database(Module):
 
     Only one database can be used at one time.
     """
+    SCAN_RESET = {'manual'}
 
     def __init__(self, bus, loop):
         """
@@ -21,6 +22,8 @@ class Database(Module):
         self.bus.add_listener('new_image', lambda i: self.add_image(i[0], *i[2:]))
         self.bus.add_listener('tag', lambda t: self.add_tag(*t[0:2], **t[2]))
         self.bus.add_listener('done', self.mark_done)
+        self.bus.add_listener('rescan', lambda args: self.rescan(*args))
+        self.bus.add_listener('img_removed', self.remove_image)
 
     async def add_image(self, uid, uri, dt, metadata):
         """
@@ -32,11 +35,18 @@ class Database(Module):
         """
         raise NotImplementedError()
 
+    async def remove_image(self, uid):
+        """
+        Removes given image from database along with all relevant entries.
+        :param uid: int: The image's identifier
+        """
+        raise NotImplementedError()
+
     async def check_image(self, uri):
         """
         Finds uid for the image (existing or new) and determines if the photo should be re-tagged.
         :param uri: str: The image's backend identifier
-        :return: (int: uid, bool: analyze)
+        :return: (bool: analyze, int: uid)
         """
         raise NotImplementedError()
 
@@ -104,6 +114,24 @@ class Database(Module):
         """
         raise NotImplementedError()
 
+    async def reset_db(self):
+        """
+        Remove all data from database
+        """
+        raise NotImplementedError()
+
+    async def rescan(self, scan_type, db_ready):
+        """
+        Prepare database for rescanning images.
+
+        :param scan_type: str: one of manual,
+        :param db_ready: asyncio.Event: database ready, must be set
+        :return:
+        """
+        if scan_type in self.SCAN_RESET:
+            await self.reset_db()
+        db_ready.set()
+
 
 class Backend(Module):
     def __init__(self, bus, database, loop):
@@ -111,7 +139,7 @@ class Backend(Module):
         self.database = database
         self.loop = loop
 
-        self.bus.add_listener('rescan', lambda *args: self.rescan)
+        self.bus.add_listener('rescan', lambda args: self.rescan(*args))
 
     async def get_image(self, uri, load=False):
         """
@@ -131,7 +159,10 @@ class Backend(Module):
         """
         raise NotImplementedError()
 
-    async def rescan(self):
+    async def rescan(self, scan_type, db_ready):
+        """
+        Force detect new images.
+        """
         raise NotImplementedError()
 
     def run_forever(self):

@@ -31,3 +31,22 @@
 
 ## Tvorba modulu
 
+## Události
+### `rescan`
+
+Oznamuje systému, že proběhne kontrola zdroje obrázků. Událost má dva argumety:
+1. typ skenu
+   - `manual`
+     - událost způsobená uživatelem
+     - všechny fotky se mají projít znovu
+   - `periodic`
+     - událost způsobená uběhnutím času
+     - kontrolují se změny ve zdroji obrázků
+2. `asyncio.Event` - Databáze připravená
+   - databáze spouští tuto událost jakmile jsou provedeny potřebné akce pro skenování (např.: označení všech fotek za nenaskenované)
+   - ostatní moduly čekají na tuto událost je-li to nutné
+
+### `img_removed`
+
+Oznamuje, že daný obrázek už není ve zdroji obrázků.
+1. uid obrázku

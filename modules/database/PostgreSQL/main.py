@@ -57,6 +57,15 @@ class PostgreDatabase(Database):
             await conn.execute('INSERT INTO images(uid, uri, created, metadata, done) VALUES ($1, $2, $3, $4, false);', uid, uri, dt,
                                metadata)
 
+    async def remove_image(self, uid):
+        await self.check_database()
+
+        async with self.pool.acquire() as conn:
+            await conn.execute('DELETE FROM images WHERE uid=$1;', uid)
+            await conn.execute('DELETE FROM tags WHERE uid=$1;', uid)
+
+
+
     async def check_image(self, uri):
         await self.check_database()
 
@@ -67,7 +76,7 @@ class PostgreDatabase(Database):
                 uid = await conn.fetchval("SELECT nextval(pg_get_serial_sequence('images', 'uid')) as new_uid;")
             else:
                 uid = row['uid']
-        return row is None, uid  # TODO and row['done']
+        return row is None or not row['done'], uid
 
     async def get_image(self, uid):
         await self.check_database()
@@ -215,6 +224,13 @@ class PostgreDatabase(Database):
                 results = await conn.fetch('SELECT * FROM images ORDER BY created;')
 
         return results, n_imgs
+
+    async def reset_db(self):
+        await self.check_database()
+        async with self.pool.acquire() as conn:
+            await conn.execute('TRUNCATE TABLE images;')
+            await conn.execute('TRUNCATE TABLE tags;')
+            await conn.execute('TRUNCATE TABLE tag_names;')
 
     def run_forever(self):
         return self.check_database()

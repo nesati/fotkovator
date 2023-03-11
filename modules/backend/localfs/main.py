@@ -71,8 +71,10 @@ class LocalfsBackend(Backend):
             else:
                 return img.get_thumbnail()
 
-    async def rescan(self, *args):
-        async def check_file(path):
+    async def rescan(self, scan_type, db_ready):
+        await db_ready.wait()
+
+        async def check_file(path, images):
             new, uid = await self.database.check_image(path)
             if new:
                 try:
@@ -82,25 +84,33 @@ class LocalfsBackend(Backend):
                 except (PIL.UnidentifiedImageError, plum.exceptions.UnpackError):
                     pass
 
+            if uid in images:
+                images.remove(uid)  # mark as found
+
         async def worker(q):
             while not q.empty():
                 job = await q.get()
                 await job
 
-        async def DFS(path, tasks):
+        async def DFS(path, tasks, images):
             for item in await aiofiles.os.scandir(path):
                 if item.is_file():
-                    await tasks.put(check_file(item.path))
+                    await tasks.put(check_file(item.path, images))
                 elif item.is_dir():
-                    await tasks.put(DFS(item.path, tasks))
+                    await tasks.put(DFS(item.path, tasks, images))
 
         tasks = asyncio.Queue()
-        await DFS(self.path, tasks)
+        images = set(map(lambda r: r['uid'], (await self.database.list_images())[0]))  # list of all uids found in db
+        await DFS(self.path, tasks, images)
         workers = [asyncio.create_task(worker(tasks)) for _ in range(self.max_concurrency)]
         await asyncio.gather(*workers)
+
+        # remove deleted images from database
+        await asyncio.gather(*map(lambda uid: asyncio.create_task(self.bus.emit('img_removed', uid)), images))
+
         await self.bus.emit('scan_done', ())
 
     async def run_forever(self):
         while 1:
-            await self.rescan()
-            await asyncio.sleep(2)  # 24 * 60 * 60
+            await self.bus.emit('rescan', ('periodic', asyncio.Event()))
+            await asyncio.sleep(60)

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import math
 from io import BytesIO
@@ -71,6 +72,11 @@ async def tags():
     tags = await app.config['database'].list_tags()
     return Response(json.dumps(tags), mimetype='application/json')
 
+
+@app.route("/rescan", methods=['POST'])
+async def rescan():
+    await app.config['bus'].emit('rescan', ('manual', asyncio.Event()))
+    return ''
 
 if __name__ == "__main__":
     app.run()
