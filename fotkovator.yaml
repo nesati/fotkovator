@@ -12,3 +12,39 @@ modules:
   - module: tag.face_recognition
   - module: frontend.basic_webserver
     port: 8080
+  - module: tag.CLIP
+    classifiers:
+      - threshold: .8
+        concepts:
+          indoors: vevnitř
+          outdoors: venku
+          "in a vehicle": ve vozidle
+      - threshold: .5
+        concepts:
+          "bad photo": "nepovedená"
+          "normal photo": []
+          "good photo": []
+          "excellent photo": []
+      - concepts:
+          "photo, photograph": []
+          "diagram, chart, graph, infographic, figure": "diagram"
+          "document, photo of a document, note, paper": "dokument"
+          "meme, joke, text, template, deep fried": "meme"
+          "drawing, scribble": "obrázek"
+      - prefix: "a photo of "
+        concepts:
+          people: lidé
+          a landscape: krajina
+          architecture: architektura
+          animals: zvířata
+          food: jídlo
+          nature: příroda
+          travel: cestování
+          a sport: sport
+          an event: událost
+          an object: předměty
+          an art piece: umění
+          a vehicle: vozidla
+          a paper: dokument
+          space: vesmír
+          electronics: elektronika

@@ -1,0 +1,1 @@
+from modules.modules.tag.CLIP.main import CLIPTagger as Module
