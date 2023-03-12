@@ -112,5 +112,6 @@ class LocalfsBackend(Backend):
 
     async def run_forever(self):
         while 1:
-            await self.bus.emit('rescan', ('periodic', asyncio.Event()))
+            if not self.database.scan_in_progress:
+                await self.bus.emit('rescan', ('periodic', asyncio.Event()))
             await asyncio.sleep(60)

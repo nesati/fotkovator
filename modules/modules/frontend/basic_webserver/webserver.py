@@ -75,8 +75,11 @@ async def tags():
 
 @app.route("/rescan", methods=['POST'])
 async def rescan():
-    await app.config['bus'].emit('rescan', ('manual', asyncio.Event()))
-    return ''
+    if not app.config['database'].scan_in_progress:
+        await app.config['bus'].emit('rescan', ('manual', asyncio.Event()))
+        return 'Scan done'
+    else:
+        return 'Scan in progress already', 503
 
 if __name__ == "__main__":
     app.run()

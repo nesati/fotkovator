@@ -27,6 +27,8 @@ class Database(Module):
         self.bus.add_listener('done', self.mark_done)
         self.bus.add_listener('rescan', lambda args: self.rescan(*args))
         self.bus.add_listener('img_removed', self.remove_image)
+        self.bus.add_listener('scan_done', lambda args: self.scan_done())
+        self.scan_in_progress = False
 
     async def add_image(self, uid, db_ready, uri, dt, metadata):
         """
@@ -132,9 +134,18 @@ class Database(Module):
         :param db_ready: asyncio.Event: database ready, must be set
         :return:
         """
+        if self.scan_in_progress:
+            raise RuntimeError('Scan already in progress')
         if scan_type in self.SCAN_RESET:
             await self.reset_db()
+        self.scan_in_progress = True
         db_ready.set()
+
+    async def scan_done(self):
+        """
+        Handles scan_done event. Unblocks scanning.
+        """
+        self.scan_in_progress = False
 
 
 class Backend(Module):
