@@ -37,7 +37,8 @@ class PostgreDatabase(Database):
                 tag_id serial PRIMARY KEY,
                 name text UNIQUE NOT NULL,
                 color text NOT NULL,
-                text_color text NOT NULL
+                text_color text NOT NULL,
+                alias text UNIQUE NOT NULL
             );''')
             await conn.execute('''CREATE TABLE IF NOT EXISTS tags(
                 uid integer REFERENCES images(uid) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -158,7 +159,7 @@ class PostgreDatabase(Database):
         await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
-            result = await conn.fetchrow('SELECT tag_id FROM tag_names WHERE name=$1;', tag)
+            result = await conn.fetchrow('SELECT tag_id FROM tag_names WHERE name=$1 OR alias=$1;', tag)
 
         if result is not None:
             result = result['tag_id']
@@ -182,8 +183,8 @@ class PostgreDatabase(Database):
 
             async with self.pool.acquire() as conn:
                 try:
-                    await conn.execute('INSERT INTO tag_names(name, color, text_color) VALUES ($1, $2, $3)', tag, color,
-                                       text_color)
+                    await conn.execute('INSERT INTO tag_names(name, color, text_color, alias) VALUES ($1, $2, $3, $1)',
+                                       tag, color, text_color)
                 except asyncpg.exceptions.UniqueViolationError:  # already created in another thread
                     pass
             tag_id = await self._get_tag_id(tag)
@@ -204,6 +205,16 @@ class PostgreDatabase(Database):
 
         async with self.pool.acquire() as conn:
             await conn.execute('DELETE FROM tags WHERE uid=$1 AND tag_id=$2;', uid, tag_id)
+
+    async def rename_tag(self, old_name, new_name):
+        await self.db_ready.wait()
+        tag_id = await self._get_tag_id(old_name)
+
+        # check for conflicts
+        assert new_name not in map(lambda t: t['name'], await self.list_tags()) or tag_id == await self._get_tag_id(new_name)
+
+        async with self.pool.acquire() as conn:
+            await conn.execute('UPDATE tag_names SET alias=$1 WHERE tag_id=$2', new_name, tag_id)
 
     async def list_tags(self):
         await self.db_ready.wait()

@@ -172,9 +172,9 @@
 	tagInput.on('itemAddedOnInit', refreshColors);
 	fetch('/tags').then(r => {
 		r.json().then(fetchedTags => {
-			availableTags = fetchedTags.map(x => x.name);
+			availableTags = fetchedTags.map(x => x.alias);
 			fetchedTags.forEach(tag => {
-				tagColors[tag.name] = tag;
+				tagColors[tag.alias] = tag;
 			});
 			refreshColors({});
 			tagInput.val().split(',').forEach(tag => {

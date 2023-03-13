@@ -28,6 +28,8 @@ class Database(Module):
         self.bus.add_listener('rescan', lambda args: self.rescan(*args))
         self.bus.add_listener('img_removed', self.remove_image)
         self.bus.add_listener('scan_done', lambda args: self.scan_done())
+        self.bus.add_listener('remove_tag', lambda args: self.remove_tag(*args))
+        self.bus.add_listener('rename_tag', lambda args: self.rename_tag(*args))
         self.scan_in_progress = False
 
     async def add_image(self, uid, db_ready, uri, dt, metadata):
@@ -103,6 +105,15 @@ class Database(Module):
         Removes a tag from a given image.
         :param uid: int: The image's identifier
         :param tag: Tag name
+        """
+        raise NotImplementedError()
+
+    async def rename_tag(self, old_name, new_name):
+        """
+        Crates an alias for the tag. Both tags should be equivalent when adding or removing tags.
+
+        :param old_name: tag to rename
+        :param new_name: name of the alias
         """
         raise NotImplementedError()
 

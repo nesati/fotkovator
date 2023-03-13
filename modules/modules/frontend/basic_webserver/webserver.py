@@ -3,7 +3,7 @@ import json
 import math
 from io import BytesIO
 
-from quart import Quart, render_template, request, send_file, Response
+from quart import Quart, render_template, request, send_file, Response, redirect
 
 app = Quart(__name__)
 
@@ -71,6 +71,22 @@ async def image():
 async def tags():
     tags = await app.config['database'].list_tags()
     return Response(json.dumps(tags), mimetype='application/json')
+
+
+@app.route("/edit", methods=['POST'])
+async def edit():
+    uid = int((await request.form)['uid'])
+    tagname = (await request.form)['tagname']
+    action = (await request.form)['action']
+
+    if action == 'delete':
+        await app.config['bus'].emit('remove_tag', (uid, tagname))
+    elif action == 'rename':
+        new_name = (await request.form)['new-tagname'].strip()
+        if new_name:
+            await app.config['bus'].emit('rename_tag', (tagname, new_name))
+
+    return redirect(f"/detail/?uid={uid}")
 
 
 @app.route("/rescan", methods=['POST'])

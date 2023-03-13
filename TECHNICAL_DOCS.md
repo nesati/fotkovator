@@ -65,3 +65,15 @@ Oznamuje, že byl nalezen nový obrázek.
 5. `datetime.datetime` nebo `None` - datum a čas vzniku obrázku
 6. `dict` - metadata získaná zdrojem
    - žádný klíč není zaručený
+
+### `remove_tag`
+
+Oznamuje, že má být odstraněn šítek od fotky.
+
+1. `uid` - identifikátor obrázku v databázi
+2. jméno tagu
+
+### `rename_tag`
+
+1. původní jméno tagu
+2. nové jméno tagu
