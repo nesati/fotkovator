@@ -13,7 +13,7 @@ class MetadataTagger(TagModule):
     def __init__(self, bus, database, backend, loop, config):
         super().__init__(bus, database, backend, loop)
 
-    async def tag(self, uid, db_ready, img, uri, crated, metadata):
+    async def tag(self, uid, db_ready, img, uri, created, metadata):
         # wait for database
         await db_ready.wait()
 
@@ -29,7 +29,7 @@ class MetadataTagger(TagModule):
             await self.bus.emit('tag', (uid, metadata['camera'], {}))
 
         # analyze datetime
-        if not crated:  # if the datetime was not taken from exif
+        if not created:  # if the datetime was not taken from exif
             # if there's no date, or it is unprecise do extra analysis
             if dt is None or (dt.second == 0 and dt.minute == 0 and dt.hour == 0):
                 # collect possible dates
@@ -47,4 +47,4 @@ class MetadataTagger(TagModule):
             await self.bus.emit('dt', (uid, dt))
 
         # add tag with datetime
-        await self.bus.emit('tag', (uid, (crated or dt).strftime('%-d. %-m. %Y'), {'color': (.75, .75, .75)}))
+        await self.bus.emit('tag', (uid, (created or dt).strftime('%-d. %-m. %Y'), {'color': (.75, .75, .75)}))

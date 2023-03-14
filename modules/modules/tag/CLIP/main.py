@@ -34,7 +34,7 @@ class CLIPTagger(TagModule):
             del classifier['concepts']
             self.classifiers.append(classifier)
 
-    async def tag(self, uid, db_ready, img, uri, crated, metadata):
+    async def tag(self, uid, db_ready, img, uri, created, metadata):
         with torch.no_grad():
             # run clip
             image = self.preprocess(img).unsqueeze(0).to(self.device)
