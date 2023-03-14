@@ -223,6 +223,8 @@ modules:
           "in a vehicle": ve vozidle
 ```
 
+Pokročilý klasifikátor umístění inspirovaný datasetem [Places2](http://places2.csail.mit.edu/index.html) najdete v [samostaném souboru](modules/modules/tag/CLIP/places.yaml).
+
 Jednoduchý klasifikátor objektu fotky:
 
 ```yaml
