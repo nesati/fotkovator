@@ -1,7 +1,16 @@
-from datetime import datetime
+from datetime import datetime, time
 
 from utils.interface import TagModule
 from modules.modules.tag.metadata import path_analyzer
+
+
+# https://stackoverflow.com/a/10748024
+def time_in_range(start, end, x):
+    """Return true if x is in the range [start, end]"""
+    if start <= end:
+        return start <= x <= end
+    else:
+        return start <= x or x <= end
 
 
 class MetadataTagger(TagModule):
@@ -45,6 +54,28 @@ class MetadataTagger(TagModule):
                 dt = min(dts)  # select oldest as it is most likely to be correct
 
             await self.bus.emit('dt', (uid, dt))
+
+        # time of day
+        if created:
+            if created.second != 0 or created.minute != 0 or created.hour != 0:  # if time is not 00:00:00
+                # extract time
+                created_time = time(hour=created.hour, minute=created.minute, second=created.second)
+
+                # categorize time
+                if time_in_range(time(5, 00, 0), time(9, 30, 0), created_time):
+                    await self.bus.emit('tag', (uid, 'ráno', {'color': (.8, 1, .4)}))
+                elif time_in_range(time(9, 30, 0), time(11, 30, 0), created_time):
+                    await self.bus.emit('tag', (uid, 'dopoledne', {'color': (.2, .6, 1)}))
+                elif time_in_range(time(11, 30, 0), time(12, 30, 0), created_time):
+                    await self.bus.emit('tag', (uid, 'poledne', {'color': (1, 1, .4)}))
+                elif time_in_range(time(12, 30, 0), time(19, 00, 0), created_time):
+                    await self.bus.emit('tag', (uid, 'odpoledne', {'color': (.4, .8, 1)}))
+                elif time_in_range(time(19, 00, 0), time(23, 30, 0), created_time):
+                    await self.bus.emit('tag', (uid, 'večer', {'color': (.35, .35, .35)}))
+                elif time_in_range(time(23, 30, 0), time(00, 30, 0), created_time):
+                    await self.bus.emit('tag', (uid, 'půlnoc', {'color': (0, 0, 0)}))
+                elif time_in_range(time(00, 30, 0), time(5, 00, 0), created_time):
+                    await self.bus.emit('tag', (uid, 'noc', {'color': (0, 0, 0)}))
 
         # add tag with datetime
         await self.bus.emit('tag', (uid, (created or dt).strftime('%-d. %-m. %Y'), {'color': (.75, .75, .75)}))
