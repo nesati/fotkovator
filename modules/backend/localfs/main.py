@@ -88,9 +88,24 @@ class LocalfsBackend(Backend):
                 images.remove(uid)  # mark as found
 
         async def worker(q):
-            while not q.empty():
-                job = await q.get()
-                await job
+            encountered_exceptions = []
+            try:
+                while 1:
+                    job = await q.get()
+                    try:
+                        await job
+                    except Exception as e:
+                        # don't raise exception now as it would stop the worker but save it for raising later
+                        encountered_exceptions.append(e)
+                    finally:  # this must happen even if exception is raised to prevent q.join from hanging forever
+                        q.task_done()
+            except asyncio.CancelledError:
+                # don't raise an exception when the worker is stopped due to all tasks being done
+                pass
+
+            for e in encountered_exceptions:
+                # raise exceptions for debugging
+                raise e
 
         async def DFS(path, tasks, images):
             for item in await aiofiles.os.scandir(path):
@@ -101,9 +116,15 @@ class LocalfsBackend(Backend):
 
         tasks = asyncio.Queue()
         images = set(map(lambda r: r['uid'], (await self.database.list_images())[0]))  # list of all uids found in db
-        await DFS(self.path, tasks, images)
+        await tasks.put(DFS(self.path, tasks, images))
         workers = [asyncio.create_task(worker(tasks)) for _ in range(self.max_concurrency)]
-        await asyncio.gather(*workers)
+        await tasks.join()  # wait for all tasks to be finished
+
+        # cancel all workers
+        for worker_task in workers:
+            worker_task.cancel()
+
+        await asyncio.gather(*workers)  # collect exceptions
 
         # remove deleted images from database
         await asyncio.gather(*map(lambda uid: asyncio.create_task(self.bus.emit('img_removed', uid)), images))
