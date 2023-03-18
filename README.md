@@ -117,7 +117,9 @@ database:
 
 ### Rozpoznání obličejů
 
-Modul `face_recognition` poskytuje wrapper na knihovnu [`face-recognition`](https://pypi.org/project/face-recognition/). Modul nepřiřazuje lidem jména, ale snaží se přiřadit stejnému člověku stejný štítek (např.: Osoba 1).
+Modul `face_recognition` poskytuje wrapper na knihovnu [`face-recognition`](https://pypi.org/project/face-recognition/). Modul sám o sobě nepřiřazuje lidem jména, ale snaží se přiřadit stejnému člověku stejný štítek (např.: Osoba 1). Jakmile však tento štítek přejmenujete asociuje si nové jméno s daným obličejem a bude ho přiřazovat i novým fotkám.
+
+Začíná fungovat dobře až když má několik (> ~10) fotek člověka, jinak míchá lidi k sobě.
 
 #### Instalace
 
@@ -130,6 +132,10 @@ Je doporučené používat `dlib` z anacondy.
 ```shell
 conda install -c conda-forge dlib
 ```
+
+#### Argumenty
+
+`db_path` - (volitelný, výchozí: face.pickle) Cesta k souboru ve kterém si modul ukládá rozpoznané obličeje a další pomocné informace.
 
 #### Příklad konfigurace
 

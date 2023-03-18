@@ -77,3 +77,9 @@ Oznamuje, že má být odstraněn šítek od fotky.
 
 1. původní jméno tagu
 2. nové jméno tagu
+
+### `delete_tag`
+
+Oznamuje, že daný štítek má přestat existovat. Jak na seznamu štítků tak u všech fotek, které ho mají.
+
+1. jméno štítku

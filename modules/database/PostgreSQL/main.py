@@ -216,6 +216,14 @@ class PostgreDatabase(Database):
         async with self.pool.acquire() as conn:
             await conn.execute('UPDATE tag_names SET alias=$1 WHERE tag_id=$2', new_name, tag_id)
 
+    async def delete_tag(self, tag):
+        await self.db_ready.wait()
+
+        tag_id = await self._get_tag_id(tag)
+
+        async with self.pool.acquire() as conn:
+            await conn.execute('DELETE FROM tag_names WHERE tag_id=$1', tag_id)
+
     async def list_tags(self):
         await self.db_ready.wait()
 
