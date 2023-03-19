@@ -1,11 +1,20 @@
 import asyncio
+import signal
 
 import yaml
+
 from utils.eventbus import EventBus
 
 
 def load_module(category, name):
     return __import__(f'modules.{category}.{name}', fromlist='init')
+
+
+async def shutdown(bus, signal, tasks):
+    print('shutting down...')
+    await bus.emit('stop', signal)
+    for task in tasks:
+        task.cancel()
 
 
 if __name__ == '__main__':
@@ -25,7 +34,16 @@ if __name__ == '__main__':
     for module in config['modules']:
         modules.append(load_module('modules', module['module']).Module(bus, database, backend, loop, module).run_forever())
 
-    modules += [database.run_forever(), backend.run_forever()]
-    modules = list(map(loop.create_task, filter(lambda corutine: corutine is not None, modules)))
+    tasks = [database.run_forever(), backend.run_forever()]
+    tasks = tuple(map(loop.create_task, filter(lambda corutine: corutine is not None, modules + tasks)))
 
-    loop.run_until_complete(asyncio.gather(*modules))
+    signals = (signal.SIGTERM, signal.SIGINT)
+    for s in signals:
+        loop.add_signal_handler(s, lambda s=s: loop.create_task(shutdown(bus, s, tasks)))
+
+    try:
+        loop.run_until_complete(asyncio.gather(*tasks))
+    except asyncio.CancelledError:
+        print('stopped')
+    else:
+        raise RuntimeError('The backend stopped unexpectedly')

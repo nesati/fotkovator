@@ -83,3 +83,9 @@ Oznamuje, že má být odstraněn šítek od fotky.
 Oznamuje, že daný štítek má přestat existovat. Jak na seznamu štítků tak u všech fotek, které ho mají.
 
 1. jméno štítku
+
+### `stop`
+
+Oznamuje, že se systém vypne. Jakmile modul obdrží tuto událost má poslední šanci provést nutné operace k bezpečnému ukončení. Poté co všechny moduly tuto událost zpracují, jsou všechny úlohy ukončeny a fotkovátor se vypíná.
+
+1. důvod vypnutí

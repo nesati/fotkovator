@@ -11,7 +11,7 @@ class PostgreDatabase(Database):
     def __init__(self, bus, loop, config):
         super().__init__(bus, loop)
         self.tag_id_max = None
-        self.bus.add_listener('stop', lambda *args: self.stop())
+        self.bus.add_listener('stop', self.stop)
         self.user = config.get('user', 'fotkovator')
         self.password = config.get('password', None)
         self.database = config.get('database', 'fotkovator')
@@ -258,6 +258,6 @@ class PostgreDatabase(Database):
     def run_forever(self):
         return self.check_database()
 
-    async def stop(self):
+    async def stop(self, signal):
         await self.db_ready.wait()
         await self.pool.close()

@@ -30,6 +30,7 @@ class FaceTagger(TagModule):
         self.bus.add_listener('rename_tag', lambda args: self.associate(*args))
         self.bus.add_listener('img_removed', lambda uid: self.img_removed(uid))
         self.bus.add_listener('rescan', lambda args: self.rescan(*args))
+        self.bus.add_listener('stop', lambda signal: self.save_db())
 
     def reset_db(self):
         self.embeddings = None
