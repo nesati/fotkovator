@@ -34,28 +34,50 @@ class CLIPTagger(TagModule):
             del classifier['concepts']
             self.classifiers.append(classifier)
 
-    async def tag(self, uid, db_ready, img, uri, created, metadata):
+    def _run_clip(self, image):
+        """
+        Run clip inference on an image
+        :param image: preprocessed image
+        :return: image_features
+        """
         with torch.no_grad():
-            # run clip
-            image = self.preprocess(img).unsqueeze(0).to(self.device)
-            image_features = await self.loop.run_in_executor(None, self.model.encode_image, image)
-            image_features /= image_features.norm(dim=1, keepdim=True)
+            return self.model.encode_image(image)
 
-            # run classifiers
-            tags = set()
-            for classifier in self.classifiers:
-                # cosine similarity
-                logits_per_image = self.logit_scale * image_features @ classifier['encodings'].t()
+    def _run_classifiers(self, image_features):
+        """
+        Run classifiers on encoded image.
+        :param image_features: normalized image_features
+        :return: set: tags
+        """
+        tags = set()
+        for classifier in self.classifiers:
+            # https://github.com/openai/CLIP/blob/main/clip/model.py#L358-L369
 
-                # calculate probabilities
-                probs = logits_per_image.softmax(dim=-1).cpu()[0]
-                idx = torch.argmax(probs)
+            # cosine similarity
+            logits_per_image = self.logit_scale * image_features @ classifier['encodings'].t()
 
-                if probs[idx] > classifier.get('threshold', 0):
-                    if isinstance(classifier['labels'][idx], str):
-                        tags.add(classifier['labels'][idx])
-                    else:
-                        tags |= set(classifier['labels'][idx])
+            # calculate probabilities
+            probs = logits_per_image.softmax(dim=-1).cpu()[0]
+            idx = torch.argmax(probs)
+
+            if probs[idx] > classifier.get('threshold', 0):
+                if isinstance(classifier['labels'][idx], str):
+                    tags.add(classifier['labels'][idx])
+                else:
+                    tags |= set(classifier['labels'][idx])
+
+        return tags
+
+    async def tag(self, uid, db_ready, img, uri, created, metadata):
+        # this requires a lot of blocking calculations, so it is run in executor
+
+        # run clip
+        image = self.preprocess(img).unsqueeze(0).to(self.device)
+        image_features = await self.loop.run_in_executor(None, self._run_clip, image)
+        image_features /= image_features.norm(dim=1, keepdim=True)
+
+        # run classifiers
+        tags = await self.loop.run_in_executor(None, self._run_classifiers, image_features)
 
         # wait for database
         await db_ready.wait()
