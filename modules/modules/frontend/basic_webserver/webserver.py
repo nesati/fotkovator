@@ -61,7 +61,7 @@ async def detail():
 
 @app.route("/img/")
 async def image():
-    uri = (await app.config['database'].get_image(int(request.args['uid'])))[0]
+    uri = (await app.config['database'].get_image(int(request.args['uid'])))['uri']
 
     if 'small' in request.args:
         image = await app.config['backend'].get_thumbnail(uri)

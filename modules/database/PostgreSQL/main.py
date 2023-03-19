@@ -83,9 +83,9 @@ class PostgreDatabase(Database):
         await self.db_ready.wait()
 
         async with self.pool.acquire() as conn:
-            uri = await conn.fetchrow('SELECT uri FROM images WHERE uid=$1;', uid)
+            row = await conn.fetchrow('SELECT * FROM images WHERE uid=$1;', uid)
 
-        return uri
+        return dict(row)
 
     async def get_info(self, uid):
         await self.db_ready.wait()
@@ -103,7 +103,7 @@ class PostgreDatabase(Database):
             results = await conn.fetch(
                 'SELECT * FROM tag_names INNER JOIN tags ON tag_names.tag_id = tags.tag_id WHERE uid=$1;', uid)
 
-        return results
+        return list(map(dict, results))
 
     async def search(self, tagnames, **kwargs):
         await self.db_ready.wait()
@@ -147,7 +147,7 @@ class PostgreDatabase(Database):
                 ORDER BY created DESC;
                 """, tag_ids, len(tag_ids))
 
-        return out, n_imgs
+        return list(map(dict, out)), n_imgs
 
     async def mark_done(self, uid):
         await self.db_ready.wait()
@@ -230,8 +230,7 @@ class PostgreDatabase(Database):
         async with self.pool.acquire() as conn:
             results = await conn.fetch('SELECT * FROM tag_names;')
 
-        results = list(map(lambda x: dict(x), results))
-        return results
+        return list(map(dict, results))
 
     async def list_images(self, **kwargs):
         await self.db_ready.wait()
@@ -248,7 +247,7 @@ class PostgreDatabase(Database):
             else:
                 results = await conn.fetch('SELECT * FROM images ORDER BY created DESC;')
 
-        return results, n_imgs
+        return list(map(dict, results)), n_imgs
 
     async def reset_db(self):
         await self.db_ready.wait()
