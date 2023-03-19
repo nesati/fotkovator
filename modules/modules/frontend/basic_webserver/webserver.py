@@ -5,6 +5,8 @@ from io import BytesIO
 
 from quart import Quart, render_template, request, send_file, Response, redirect
 
+from modules.modules.frontend.basic_webserver.metadata import clean_metadata
+
 app = Quart(__name__)
 
 PAGE = 24
@@ -51,6 +53,9 @@ async def detail():
     uid = int(request.args['uid'])
     info = await app.config['database'].get_info(uid)
     tags = await app.config['database'].get_tags(uid)
+
+    info['metadata'] = clean_metadata(info['metadata'])
+
     return await render_template('photo.html', info=info, tags=tags)
 
 
@@ -96,6 +101,7 @@ async def rescan():
         return 'Scan done'
     else:
         return 'Scan in progress already', 503
+
 
 if __name__ == "__main__":
     app.run()

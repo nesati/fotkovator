@@ -14,7 +14,8 @@ class Encoder(json.JSONEncoder):
 
 
 class Decoder(json.JSONDecoder):
-    def object_hook(self, source):
+    @staticmethod
+    def object_hook(source):
         for k, v in source.items():
             if isinstance(v, str):
                 try:
@@ -29,4 +30,4 @@ def encoder(value):
 
 
 def decoder(value):
-    return json.loads(value, cls=Decoder)
+    return json.loads(value, cls=Decoder, object_hook=Decoder.object_hook)

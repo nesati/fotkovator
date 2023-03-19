@@ -29,11 +29,8 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.js"
 			integrity="sha512-VvWznBcyBJK71YKEKDMpZ0pCVxjNuKwApp4zLF3ul+CiflQi6aIJR+aZCP/qWsoFBA28avL5T5HA+RE+zrGQYg=="
 			crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput-angular.min.js"
-			integrity="sha512-KT0oYlhnDf0XQfjuCS/QIw4sjTHdkefv8rOJY5HHdNEZ6AmOh1DW/ZdSqpipe+2AEXym5D0khNu95Mtmw9VNKg=="
-			crossorigin="anonymous"></script>
 
-	<title>Štítkovátor</title>
+	<title>Fotkovátor</title>
 	<style>
 		.grid {
 			display: grid;
@@ -72,20 +69,48 @@
 
 		.bootstrap-tagsinput {
 			width: 100%;
-			padding: .375rem .75rem;
+			display: flex;
+			flex-wrap: wrap;
+		}
+		.badge {
+			padding: 0 1em;
+			font-weight: unset;
+		}
+		.tag [data-role="remove"]::after {
+			content: "close" !important;
+			vertical-align: bottom;
+			/* https://fonts.googleapis.com/icon?family=Material+Icons */
+			font-family: 'Material Icons';
+			direction: ltr;
+			-moz-font-feature-settings: 'liga';
+			-moz-osx-font-smoothing: grayscale;
+		}
+		.tag [data-role="remove"]:hover {
+			box-shadow: none !important;
+		}
+		.bootstrap-tagsinput  {
+			height: 100%;
+		}
+		.ui-autocomplete-input {
+			flex-grow: 1;
+		}
+		.ui-autocomplete-input, .badge {
+			height: 2em;
+			line-height: 2em;
+			font-size: 1em;
 		}
 	</style>
 </head>
 <body>
-<main class="container">
-	<a href="/" class="text-dark text-decoration-none"><h1 class="">Štítkovátor</h1></a>
+<main class="container py-3">
+	<a href="/" class="text-dark text-decoration-none"><h1>Fotkovátor</h1></a>
 	<form class="mb-3 row" action="/search">
 		<div class="col">
-			<input data-role="tagsinput" type="text" value="{{ querry }}" class="form-control tagAutoComplete w-100"
+			<input data-role="tagsinput" type="text" value="{{ querry }}" class="tagAutoComplete d-none"
 				   placeholder="Vyhledávání..." aria-label="Vyhledávání" name="tag">
 		</div>
 		<div class="col-3 col-sm-2 col-md-2 col-lg-1 col-xl-1 col-xxl-1">
-			<button type="submit" class="btn btn-primary py-0" style="width: 100%">
+			<button type="submit" class="btn btn-primary py-0 w-100 h-100">
 				<span class="material-icons" style="line-height: unset">search</span>
 			</button>
 		</div>
@@ -114,12 +139,12 @@
 			<li class="page-item">
 				<a class="page-link" href="{{ request.path }}?tag={{ querry | urlencode }}&p=0" aria-label="First">
 					<span aria-hidden="true">&laquo;</span>
-					<span class="sr-only">First</span>
+					<span class="d-none d-lg-inline">Nejnovější</span>
 				</a>
 			</li>
 			{% for i in range(page - 3, page + 4) %}
 				{% if i >= 0 and i < n_pages %}
-					<li class="page-item {% if i == page %}active{% endif %} {% if i == page - 3 or i == page + 3 %}d-none d-md-block{% endif %}">
+					<li class="page-item {% if i == page %}active{% endif %} {% if i == page - 3 or i == page + 3 %}d-none d-sm-block{% endif %}">
 						<a class="page-link"
 						   href="{{ request.path }}?tag={{ querry | urlencode }}&p={{ i | safe }}">{{ i }}</a>
 					</li>
@@ -127,7 +152,7 @@
 			{% endfor %}
 			<li class="page-item">
 				<a class="page-link" href="{{ request.path }}?tag={{ querry | urlencode }}&p={{ (n_pages - 1) | safe }}" aria-label="Last">
-					<span class="sr-only">Last</span>
+					<span class="d-none d-lg-inline">Nejstarší</span>
 					<span aria-hidden="true">&raquo;</span>
 				</a>
 			</li>
@@ -140,13 +165,28 @@
 		integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
 		crossorigin="anonymous"></script>
 <script>
+	const confirm = [
+		13, // Enter
+	]
+	const sep = [
+		32, // Space
+		188, // Comma
+		186, // Semicolon
+		9, // Tab
+	]
+	let results;
+	let submitOnRemove = false;
 	let availableTags;
 	let tagColors = {}
 	const tagInput = $('.tagAutoComplete');
 	tagInput.tagsinput({
-		tagClass: 'badge rounded-pill',
+		tagClass: 'badge rounded-pill mx-1',
+		confirmKeys: [],
 	});
 	tagInput.on('itemRemoved', function (event) {
+		if (submitOnRemove) {
+			tagInput.form().submit()
+		}
 		availableTags.push(event.item)
 	});
 	tagInput.on('beforeItemAdd', function (event) {
@@ -154,29 +194,30 @@
 			event.cancel = true
 		}
 	});
-	tagInput.on('beforeItemAdd', function (event) {
-		if (availableTags.indexOf(event.item) < 0) {
-			event.cancel = true
-		}
-	});
 
-	function refreshColors(e) {
+	function refreshTags(e) {
 		Array.prototype.forEach.call($('.bootstrap-tagsinput span.tag'), el => {
+			// set tag colors
 			let tag = tagColors[el.innerText];
 			el.style.color = tag.text_color;
 			el.style.backgroundColor = tag.color;
+
+			// register click listener for submitting on remove
+			$(el.children[0]).click(e => {
+				submitOnRemove = true;
+			});
 		});
 	}
 
-	tagInput.on('itemAdded', refreshColors);
-	tagInput.on('itemAddedOnInit', refreshColors);
+	tagInput.on('itemAdded', refreshTags);
+	tagInput.on('itemAddedOnInit', refreshTags);
 	fetch('/tags').then(r => {
 		r.json().then(fetchedTags => {
 			availableTags = fetchedTags.map(x => x.alias);
 			fetchedTags.forEach(tag => {
 				tagColors[tag.alias] = tag;
 			});
-			refreshColors({});
+			refreshTags({});
 			tagInput.val().split(',').forEach(tag => {
 				let i = availableTags.indexOf(tag)
 				if (i > -1) {
@@ -195,6 +236,33 @@
 					}
 					event.preventDefault();
 					textInput.val('');
+				},
+				response: function(event, ui) {
+					results = ui.content.map(function(item) {
+						return item.value;
+					});
+				}
+			});
+			textInput.keypress(function (event) {
+				if (confirm.indexOf(event.charCode) !== -1) {
+					event.preventDefault()
+					if (event.target.value !== '') {
+						tagInput.tagsinput('add', event.target.value)
+						event.target.value = '';
+					} else {
+						event.target.form.submit()
+					}
+				} else if (sep.indexOf(event.charCode) !== -1) {
+					textInput.autocomplete("search", event.target.value + event.key)
+
+					// check if character not used in tag name
+					results = undefined;
+					textInput.autocomplete("search", event.target.value + event.key)
+					if (results.length === 0) {
+						event.preventDefault()
+						tagInput.tagsinput('add', event.target.value)
+						event.target.value = '';
+					}
 				}
 			});
 		});

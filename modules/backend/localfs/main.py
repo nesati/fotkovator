@@ -27,8 +27,8 @@ class LocalfsBackend(Backend):
         metadata = {
             "uri": path,
             "path": os.path.abspath(path),
-            "file_created": await aiofiles.os.path.getctime(path),
-            "file_modified": await aiofiles.os.path.getmtime(path),
+            "file_created": datetime.fromtimestamp(await aiofiles.os.path.getctime(path)),
+            "file_modified": datetime.fromtimestamp(await aiofiles.os.path.getmtime(path)),
             "file_size": await aiofiles.os.path.getsize(path),
         }
         exif = Exif(img_file)

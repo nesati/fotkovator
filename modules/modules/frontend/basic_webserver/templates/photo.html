@@ -43,17 +43,23 @@
 		.material-icons {
 			vertical-align: text-bottom;
 		}
+		tr:last-child td {
+			border-bottom: 0;
+		}
+		td:last-child {
+			vertical-align: bottom;
+		}
 	</style>
-	<title>Štítkovátor</title>
+	<title>Fotkovátor</title>
 </head>
 <body>
-<main class="container">
-	<a href="/" class="text-dark text-decoration-none"><h1 class="">Štítkovátor</h1></a>
+<main class="container py-3">
+	<a href="/" class="text-dark text-decoration-none"><h1>Fotkovátor</h1></a>
 	<div class="row">
 		<div class="col">
-			<div class="tags m-2">
+			<div class="tags d-flex justify-content-center flex-wrap">
 				{% for tag in tags %}
-					<div class="badge rounded-pill text-decoration-none"
+					<div class="badge rounded-pill text-decoration-none m-1"
 						 style="background: {{ tag.color | safe }};color: {{ tag.text_color | safe }};">
 						<a href="/search?tag={{ tag.alias | safe }}" class="link-unstyled">
 							<!--img src="clovek.jpg"-->
@@ -87,7 +93,7 @@
 		</div>
 		<div class="col p-2">
 			<div class="card card-body d-block mx-auto">
-				<table>
+				<table class="table m-0">
 					{% for key, value in info.metadata.items() %}
 						<tr>
 							<td>{{ key }}</td>
