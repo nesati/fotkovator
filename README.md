@@ -284,6 +284,21 @@ modules:
         "drawing, scribble": "obrázek"
 ```
 
+### Hlášení událostí
+
+Modul `event_logger` slouží hlavně pro debugování. Vypisuje události a jejich argumenty do konzole.
+
+#### Instalace
+
+Není potřeba nic.
+
+#### Příklad konfigurace
+
+```yaml
+modules:
+  - module: misc.event_logger
+```
+
 ## Možnosti rozšíření
 
 Způsoby, kterými lze vylepšit tento projekt, ale nejsou jeho součástí.
