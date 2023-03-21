@@ -78,4 +78,4 @@ class MetadataTagger(TagModule):
                     await self.bus.emit('tag', (uid, 'noc', {'color': (0, 0, 0)}))
 
         # add tag with datetime
-        await self.bus.emit('tag', (uid, (created or dt).strftime('%-d. %-m. %Y'), {'color': (.75, .75, .75)}))
+        await self.bus.emit('tag', (uid, (created or dt).strftime('%d. %m. %Y').replace(' 0', ' '), {'color': (.75, .75, .75)}))

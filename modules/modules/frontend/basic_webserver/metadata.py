@@ -37,7 +37,7 @@ def clean_metadata(metadata):
 
         # stringify
         if isinstance(v, datetime.datetime):
-            v = v.strftime('%-d. %-m. %Y %H:%M:%S')
+            v = v.strftime('%d. %m. %Y %H:%M:%S').replace(' 0', ' ')
 
         if k == 'file_size':
             try:

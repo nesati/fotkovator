@@ -10,6 +10,10 @@ def load_module(category, name):
     return __import__(f'modules.{category}.{name}', fromlist='init')
 
 
+def handler(signal, trace):
+    loop.create_task(shutdown(bus, signal, tasks))
+
+
 async def shutdown(bus, signal, tasks):
     print('shutting down...')
     await bus.emit('stop', signal)
@@ -18,8 +22,12 @@ async def shutdown(bus, signal, tasks):
 
 
 if __name__ == '__main__':
-    with open('fotkovator.yaml', 'r') as file:
-        config = yaml.safe_load(file)
+    try:
+        with open('fotkovator.yaml', 'r') as file:
+            config = yaml.safe_load(file)
+    except UnicodeDecodeError:
+        with open('fotkovator.yaml', 'r', encoding='UTF-8') as file:
+            config = yaml.safe_load(file)
 
     print(config)
 
@@ -39,11 +47,12 @@ if __name__ == '__main__':
 
     signals = (signal.SIGTERM, signal.SIGINT)
     for s in signals:
-        loop.add_signal_handler(s, lambda s=s: loop.create_task(shutdown(bus, s, tasks)))
+        signal.signal(s, handler)
 
     try:
         loop.run_until_complete(asyncio.gather(*tasks))
     except asyncio.CancelledError:
         print('stopped')
+        exit(0)
     else:
         raise RuntimeError('The backend stopped unexpectedly')
