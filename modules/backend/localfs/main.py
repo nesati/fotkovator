@@ -65,11 +65,17 @@ class LocalfsBackend(Backend):
 
     async def get_thumbnail(self, path, load=False):
         async with aiofiles.open(path, mode='rb') as f:
-            img = Exif(BytesIO(await f.read()))
+            img_file = await f.read()
+            try:
+                img = Exif(BytesIO(img_file))
+                thumbnail = img.get_thumbnail()
+            except RuntimeError:  # image doesn't have an exif thumbnail
+                thumbnail = img_file  # FIXME for non-localhost deployment images should be downscaled
+
             if load:
-                return Image.open(BytesIO(img.get_thumbnail()))
+                return Image.open(BytesIO(thumbnail))
             else:
-                return img.get_thumbnail()
+                return thumbnail
 
     async def rescan(self, scan_type, db_ready):
         await db_ready.wait()
