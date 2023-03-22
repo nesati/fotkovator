@@ -42,7 +42,9 @@ class MetadataTagger(TagModule):
             # if there's no date, or it is unprecise do extra analysis
             if dt is None or (dt.second == 0 and dt.minute == 0 and dt.hour == 0):
                 # collect possible dates
-                dts = {dt}
+                dts = set()
+                if dt is not None:
+                    dts.add(dt)
                 if 'file_created' in metadata:
                     dts.add(metadata['file_created'])
                 if 'file_modified' in metadata:
