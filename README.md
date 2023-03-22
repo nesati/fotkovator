@@ -7,13 +7,13 @@ Fotkovátor je modulární systém na automatické štítkování fotek napsaný
 Pro jakoukoliv instalaci je nejprve potřeba [Python](https://www.python.org/) 3.10 a závislosti, které lze nainstalovat příkazem: 
 
 ```shell
-pip intall -r requirements.txt
+pip install -r requirements.txt
 ```
 
 Další kroky se odvíjejí od zvolených [modulů](#konfigurace-modulů). Většinou však stačí:
 
 ```shell
-pip intall -r modules/<cesta k modulu>/requirements.txt
+pip install -r modules/<cesta k modulu>/requirements.txt
 ```
 
 ## Konfigurace
