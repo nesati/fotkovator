@@ -1,24 +1,40 @@
 # Fotkovátor
 
-Fotkovátor je modulární systém na automatické štítkování fotek napsaný v Pythonu. Tento dokument obsahuje informace o instalaci a konfiguraci pro uživatele. Hledáte-li objasnění technických detailů nebo [návod na tvorbu modulu](TECHNICAL_DOCS.md#tvorba-modulu), najdete je v [technické dokumentaci](TECHNICAL_DOCS.md).
+[[teoretická práce]](documentation.pdf)
+
+Fotkovátor je modulární systém na automatické štítkování fotek napsaný v Pythonu. Tento dokument obsahuje informace o instalaci a konfiguraci pro uživatele. Hledáte-li objasnění technických detailů implementace, najdete je v [technické dokumentaci](TECHNICAL_DOCS.md). Ještě detailnější popis pak najdete v [teoretické práci](documentation.pdf).
 
 ## Instalace
 
-Pro jakoukoliv instalaci je nejprve potřeba [Python](https://www.python.org/) 3.10 a závislosti, které lze nainstalovat příkazem: 
+Nejprve potřeba mít nainstalovaný [Python](https://www.python.org/) 3.10 a manažer balíčků `pip`. Doporučil bych využití systému [Anaconda](https://docs.conda.io/en/latest/miniconda.html), kvůli instalaci balíčků vyžadovaných některými moduly a kvůli taktéž doporučené možnosti vytvořit virtuální prostředí:
+
+```shell
+conda create -n fotkovator python=3.10
+conda activate fotkovator
+```
+
+Pro instalaci projektu samotného nejprve oklonujte repozitář:
+
+```shell
+git clone https://github.com/nesati/fotkovator
+cd fotkovator
+```
+
+Od teď všechny příkazy předpokládají, že se nacházíte v kořenovém adresáři repozitáře. Dále nainstalujte závislosti příkazem:
 
 ```shell
 pip install -r requirements.txt
 ```
 
-Další kroky se odvíjejí od zvolených [modulů](#konfigurace-modulů). Většinou však stačí:
-
-```shell
-pip install -r modules/<cesta k modulu>/requirements.txt
-```
+Jednotlivé moduly pak mají svoje požadavky na instalaci, ale většinou stačí nainstalovat závislosti příkazem: `pip install -r modules/<cesta k modulu>/requirements.txt`. Bližší informace najdete v [sekcích jednotlivých modulů](#konfigurace-modulů).
 
 ## Konfigurace
 
-Celý systém se konfiguruje v souboru `fotkovator.yaml` ve formátu [yaml](https://yaml.org/). Je nutné zvolit právě jednu `database` (databázi) a právě jeden `backend` (zdroj obrázků). Všechny ostatní moduly jsou volitelné. Je však doporučené nainstalovat a nakonfigurovat alespoň jeden modul kategorie `frontend` (uživatelské rozhraní).
+Celý systém se konfiguruje v souboru `fotkovator.yaml` ve formátu [YAML](https://yaml.org/). Je nutné zvolit právě jednu databázi (`database`) a právě jeden zdroj obrázků (`backend`). Všechny ostatní moduly jsou volitelné. Je však doporučené nainstalovat a nakonfigurovat alespoň jeden modul kategorie uživatelské rozhraní (\verb|frontend|).
+
+V repozitáři se nachází výchozí konfigurace, ve které najdete nakonfigurovaný zdroj fotek prohledávající složku \verb|photos|, kterou musíte vytvořit a vložit do ní fotky, které chcete oštítkovat, PostgreSQL klient připojující se na `postgres://fotkovator:mysecretpassword@localhost:5432/fotkovator`, Webovým uživatelským rozhraním na [localhost:8080](http://localhost:8080) a všemi štítkovacími moduly v repozitáři.
+
+Projekt jsem testoval na operačních systémech Linux a Windows.
 
 Nyní se podívejme na příklad konfigurace.
 
@@ -49,13 +65,13 @@ Program zapnete příkazem:
 python fotkovator.py
 ```
 
-Program okamžitě začne zpracovávat fotky z nakonfigurovaného zdroje. Způsob otevření uživatelského rozhraní záleží na nakonfigurovaném rozhraní.
+Po spuštění načte konfiguraci a okamžitě začne zpracovávat fotky z nakonfigurovaného zdroje. Způsob otevření uživatelského rozhraní záleží na nakonfigurovaném rozhraní.
 
 ## Konfigurace modulů
 
 ### Lokální soubory
 
-Přístup k lokálním souborům je umožněn modulem `localfs`. Periodicky kontroluje změny v souborovém systému.
+Přístup k lokálním souborům je umožněn modulem `localfs`. Periodicky kontroluje změny v souborovém systému. Nakonfigurovanou složku musíte vytvořit ručně, pak do ní můžete vkládat a z ní odstraňovat fotky a obrázky libovolně a systém by si měl poradit.
 
 #### Instalace
 
@@ -67,7 +83,7 @@ pip install -r modules/backend/localfs/requirements.txt
 
 `path` - (povinný) Cesta ke složce s obrázky
 
-`max_concurency` - (volitelný, výchozí: 16) Počet fotek které analyzovat současně
+`max_concurency` - (volitelný, výchozí hodnota: 16) Počet fotek které analyzovat současně
 
 #### Příklad konfigurace
 
@@ -92,20 +108,24 @@ pip install -r modules/database/PostgreSQL/requirements.txt
 Je nutné nainstalovat také server. Například přes [docker](https://www.docker.com/):
 
 ```shell
-docker run --name fotkovatordb -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_USER=fotkovator -d postgres
+docker run --name fotkovatordb \
+           -p 5432:5432 \
+           -e POSTGRES_PASSWORD=mysecretpassword \
+           -e POSTGRES_USER=fotkovator \
+           -d postgres
 ```
 
 #### Argumenty
 
-`user` - (volitelný, výchozí: fotkovator)
+`user` - (volitelný, výchozí hodnota: fotkovator)
 
-`password` - (volitelný, výchozí: proměnná prostředí `PGPASSWORD`) heslo do databáze
+`password` - (volitelný, výchozí hodnota: proměnná prostředí `PGPASSWORD`) heslo do databáze
 
-`host` - (volitelný, výchozí: localhost) ip nebo hostname postgres serveru
+`host` - (volitelný, výchozí hodnota: localhost) IP nebo hostname PostgreSQL serveru
 
-`port` - (volitelný, výchozí: proměnná prostředí `PGPORT`, nebo `5432` není-li definovaná)
+`port` - (volitelný, výchozí hodnota: proměnná prostředí `PGPORT`, nebo `5432` není-li definovaná)
 
-`database` - (volitelný, výchozí: fotkovator) název databáze ve které fotkovátor ukládá data
+`database` - (volitelný, výchozí hodnota: fotkovator) název databáze ve které fotkovátor ukládá data
 
 #### Příklad konfigurace
 
@@ -115,11 +135,52 @@ database:
   password: mysecretpassword
 ```
 
+### Webové rozhraní
+
+Jednoduchý způsob jak přistupovat k Fotkovátoru je přes webový prohlížeč. Webový server implementuje modul `basic_webserver`. Pokud nezměníte konfiguraci stačí po zapnutí Fotkovátoru navštívit [localhost:5000](http://localhost:5000).
+
+#### Instalace
+
+```shell
+pip install -r modules/modules/frontend/basic_webserver/requirements.txt 
+```
+
+#### Argumenty
+
+`port` - (volitelný, výchozí hodnota: 5000) port na kterém poslouchat
+
+`host` - (volitelný, výchozí hodnota: localhost) interface kde poslouchat
+
+#### Příklad konfigurace
+
+```yaml
+modules:
+  - module: frontend.basic_webserver
+    port: 8080 # příklad změny portu
+```
+
+### Zpracování metadat
+
+Modul `metadata` přidává štítky na základě informací, které nejsou obsaženy v obraze samotném. Například datum pořízení obrázku, složky ve kterých se nachází, název fotoaparátu atd.
+
+#### Instalace
+
+```shell
+pip install -r modules/modules/tag/metadata/requirements.txt
+```
+
+#### Příklad konfigurace
+
+```yaml
+modules:
+  - module: tag.metadata
+```
+
 ### Rozpoznání obličejů
 
 Modul `face_recognition` poskytuje wrapper na knihovnu [`face-recognition`](https://pypi.org/project/face-recognition/). Modul sám o sobě nepřiřazuje lidem jména, ale snaží se přiřadit stejnému člověku stejný štítek (např.: Osoba 1). Jakmile však tento štítek přejmenujete asociuje si nové jméno s daným obličejem a bude ho přiřazovat i novým fotkám.
 
-Začíná fungovat dobře až když má několik (> ~10) fotek člověka, jinak míchá lidi k sobě.
+Začíná fungovat dobře až když má několik (> ~10) fotek člověka, jinak má tendenci obličeje seskupovat k sobě docela náhodným způsobem. Také do někdy samostatných skupin dává chybně označené obličeje.
 
 #### Instalace
 
@@ -135,7 +196,7 @@ conda install -c conda-forge dlib
 
 #### Argumenty
 
-`db_path` - (volitelný, výchozí: face.pickle) Cesta k souboru ve kterém si modul ukládá rozpoznané obličeje a další pomocné informace.
+`db_path` - (volitelný, výchozí hodnota: face.pickle) Cesta k souboru ve kterém si modul ukládá rozpoznané obličeje a další pomocné informace.
 
 #### Příklad konfigurace
 
@@ -144,61 +205,34 @@ modules:
   - module: tag.face_recognition
 ```
 
-### Webové uživatelské rozhraní
-
-Jednoduchý způsob jak přistupovat k Fotkovátoru je přes webový prohlížeč. Webový server implementuje modul `basic_webserver`. Pokud nezměníte konfiguraci stačí po zapnutí fotkovátoru navštívit [localhost:5000](http://localhost:5000).
-
-#### Instalace
-
-```shell
-pip install -r modules/modules/frontend/basic_webserver/requirements.txt 
-```
-
-#### Argumenty
-
-`port` - (volitelný, výchozí: 5000) port na kterém poslouchat
-
-`host` - (volitelný, výchozí: localhost) interface kde poslouchat
-
-#### Příklad konfigurace
-
-```yaml
-modules:
-  - module: frontend.basic_webserver
-    port: 8080 # příklad změny portu
-```
-
-### Zpracování metadat
-
-Modul `metadata` přidává štítky na zákldě informací, které nejsou obsaženy v obraze samotném. Například datum pořízení obrázku, složky ve kterých se nachází, název fotoaparátu atd.
-
-#### Instalace
-
-```shell
-pip install -r modules/modules/tag/metadata/requirements.txt
-```
-
-#### Příklad konfigurace
-
-```yaml
-modules:
-  - module: tag.metadata
-```
-
 ### CLIP
 
-[CLIP](https://openai.com/research/clip) je neuronová síť propojující obrázky a text. Lze ji aplikovat na rozpoznávání víceméně libovolných vizuálních konceptů popsatelných slovy. Implementuje ji modul `CLIP`.
- 
+[CLIP](https://openai.com/research/clip) je neuronová síť propojující obrázky a text. Lze ji aplikovat na rozpoznávání víceméně libovolných vizuálních konceptů popsatelných slovy. Implementuje ji modul `tag.CLIP`.
+
+Jde o asi nejmocnější část Fotkovátoru. Je velmi obecný a lze ho specializovat na rozlišování téměř čehokoliv. Jeho obecnost má však svoje limity. Nerozumí příliš dobře věcem, které jsou na internetu málo anotované. Pokoušel jsem se tento modul využít k detekci fotek, které jsou otočené, ale bez úspěchu.
+
+U méně používaných jazyků se jeho porozumění výrazně zhoršuje a s jazyky, které nejsou psané latinkou, je naprosto nepoužitelný. Proto konfigurace nabízí možnost zadat popis obrázku v jiném jazyce (doporučuji anglicky) než samotné přiřazené štítky.
+
+Tvorbu klasifikátoru si můžete představit jako seznam možností odpovědi na otázku „Co nejlépe popisuje daný obrázek?“. `threshold` pak určuje, jak moc si CLIP musí být jistý odpovědí, aby se štítky přiřadily.
+
+K tvorbě klasifikátoru je ještě nutné podotknout, že model je náchylný na formulaci daného popisu. Kolem tohoto problému již vzniká komunita tzv. prompt inženýrů, která se snaží najít metody formulování s nejlepšími výsledky.
+
+Pokud požíváte více klafisikátorů není nutné mít víc instancí CLIP modulu.
+
 #### Argumenty
 
-`model` - (volitelný, výchozí: ViT-B/32) - verze CLIPu, kterou požívat
+`model` - (volitelný, výchozí hodnota: `ViT-B/32`) verze CLIPu, kterou požívat
 
 `classifiers` - (povinný) seznam klasifikátorů
-- `threshold` - (volitelný, výchozí: 0) - minimální pravděpodobnost nutná pro přiřazení štítku
-- `concepts` - (povinný) vizuální koncepty a k ním asociované štítky viz příklady konfigurace
-  - popis vizuálního konceptu je dopručen v angličtině (Obecně platí, čím méně používaný jazyk tím horší výsledky. Ještě horší pak jsou výsledky jazyků nepsaných latinkou.)
-  - štítků spojených s daným konceptem může být libovolný počet. Pokud mají dva klasifikátory stejný název štítku, jsou tyto štítky automaticky sloučeny
-- `prefix` - text co se vloží před každý koncept (např.: "a photo of ")
+
+`threshold` - (volitelný, výchozí hodnota: `0`) minimální pravděpodobnost nutná pro přiřazení štítku
+
+`concepts` - (povinný) vizuální koncepty a k ním asociované štítky (viz příklady konfigurace)
+
+Štítků spojených s daným konceptem může být libovolný počet. Pokud mají dva klasifikátory stejný název štítku, jsou tyto štítky automaticky sloučeny.
+
+`prefix` - text co se vloží před každý koncept (např.: "a photo of ")
+
 #### Instalace
 
 
@@ -229,7 +263,7 @@ modules:
           "in a vehicle": ve vozidle
 ```
 
-Pokročilý klasifikátor umístění inspirovaný datasetem [Places2](http://places2.csail.mit.edu/index.html) najdete v [samostaném souboru](modules/modules/tag/CLIP/places.yaml).
+Pokročilý klasifikátor vytvořený na základě datasetu [Places2](http://places2.csail.mit.edu/index.html) najdete v [samostaném souboru](modules/modules/tag/CLIP/places.yaml).
 
 Jednoduchý klasifikátor objektu fotky:
 
@@ -284,7 +318,7 @@ modules:
         "drawing, scribble": "obrázek"
 ```
 
-### Hlášení událostí
+### Záznamník událostí
 
 Modul `event_logger` slouží hlavně pro debugování. Vypisuje události a jejich argumenty do konzole.
 
@@ -307,17 +341,23 @@ Způsoby, kterými lze vylepšit tento projekt, ale nejsou jeho součástí.
 
 Možnosti rozšíření kompatibilní se současným modulárním systémem.
 
-- Android aplikce (backend + frontend)
+- Mobilní aplikce (backend + frontend)
 - Modul co umožňuje spouštení ostatních modulů na jiném počítači (cloud GPU)
+- Detekce duplicit
+- OCR
 
 ### Další
 
 - Moduly nahrazující fotky
   - Kolorizace černobílých fotek
   - Koprese
+  - otočení fotek
+  - upscaling
 - Automatické kombinování podobných fotek
   - live photos
-  - HDR
+  - HDR/denoising
+  - automatické panorama
+  - aby se všichni dívali do kamery najednou
 - [CLIP](https://openai.com/blog/clip/) vyhledávání viz [clip-retrieval](https://github.com/rom1504/clip-retrieval)
 
 ## Credits

@@ -22,6 +22,7 @@
 #### Databáze
 
 - ukládá dlouhodobě data
+- zařizuje vyhledávání
 
 #### Frontend
 
