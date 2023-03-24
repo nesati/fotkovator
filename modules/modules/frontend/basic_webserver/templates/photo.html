@@ -118,6 +118,7 @@
 <form action="/edit" method="post">
 	<input type="hidden" name="uid" value="{{ info.uid }}">
 	<input type="hidden" name="tagname" id="tagname" value="">
+	<input type="hidden" name="action" id="action" value="">
 	<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="Dialog editování štítků" aria-hidden="true">
 		<div class="modal-dialog modal-dialog-centered">
 			<div class="modal-content">
@@ -171,6 +172,7 @@
 
 		// update form values
 		document.getElementById('tagname').value = tagName
+		document.getElementById('action').value = action
 
 		// Update the modal's content.
 		const modalTitle = document.getElementById('editModalLabel')
