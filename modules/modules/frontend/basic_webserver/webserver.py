@@ -90,6 +90,10 @@ async def edit():
         new_name = (await request.form)['new-tagname'].strip()
         if new_name:
             await app.config['bus'].emit('rename_tag', (tagname, new_name))
+    elif action == 'add':
+        new_name = (await request.form)['add-tagname'].strip()
+        if new_name:
+            await app.config['bus'].emit('tag', (uid, new_name, {}))
 
     return redirect(f"/detail/?uid={uid}")
 
