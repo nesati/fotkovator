@@ -190,8 +190,12 @@
 		availableTags.push(event.item)
 	});
 	tagInput.on('beforeItemAdd', function (event) {
-		if (availableTags.indexOf(event.item) < 0) {
+		if (!event.options || !event.options.checked) {
 			event.cancel = true
+			let idx = availableTags.findIndex(element => element.toLowerCase() === event.item.toLowerCase())
+			if (idx > -1) {
+				tagInput.tagsinput('add', availableTags[idx], {checked: true});
+			}
 		}
 	});
 
@@ -199,6 +203,9 @@
 		Array.prototype.forEach.call($('.bootstrap-tagsinput span.tag'), el => {
 			// set tag colors
 			let tag = tagColors[el.innerText];
+			if (tag === undefined) {
+				return;
+			}
 			el.style.color = tag.text_color;
 			el.style.backgroundColor = tag.color;
 
