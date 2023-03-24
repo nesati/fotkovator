@@ -52,6 +52,8 @@ async def search():
 async def detail():
     uid = int(request.args['uid'])
     info = await app.config['database'].get_info(uid)
+    if info is None:
+        return await not_found()
     tags = await app.config['database'].get_tags(uid)
 
     info['metadata'] = clean_metadata(info['metadata'])
@@ -105,6 +107,17 @@ async def rescan():
         return 'Scan done'
     else:
         return 'Scan in progress already', 503
+
+
+# error handlers
+@app.errorhandler(404)
+async def not_found(*_):
+    return await render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+async def internal_error(*_):
+    return await render_template('500.html'), 500
 
 
 if __name__ == "__main__":

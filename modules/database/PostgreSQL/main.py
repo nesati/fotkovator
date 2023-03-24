@@ -94,7 +94,8 @@ class PostgreDatabase(Database):
             await conn.set_type_codec('json', encoder=encoder, decoder=decoder, schema='pg_catalog')
             row = await conn.fetchrow('SELECT * FROM images WHERE uid=$1;', uid)
 
-        return dict(row)
+        if row is not None:
+            return dict(row)
 
     async def get_tags(self, uid):
         await self.db_ready.wait()
