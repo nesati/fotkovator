@@ -112,12 +112,12 @@ async def rescan():
 # error handlers
 @app.errorhandler(404)
 async def not_found(*_):
-    return await render_template('404.html'), 404
+    return await render_template('error.html', code=404, message='Nenalezeno'), 404
 
 
 @app.errorhandler(500)
 async def internal_error(*_):
-    return await render_template('500.html'), 500
+    return await render_template('error.html', code=500, message='Interní chyba'), 500
 
 
 if __name__ == "__main__":
