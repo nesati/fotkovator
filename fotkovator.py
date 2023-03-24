@@ -48,6 +48,10 @@ if __name__ == '__main__':
     signals = (signal.SIGTERM, signal.SIGINT)
     for s in signals:
         signal.signal(s, handler)
+        try:
+            loop.add_signal_handler(s, lambda s=s: loop.create_task(shutdown(bus, s, tasks)))
+        except NotImplementedError:
+            pass
 
     try:
         loop.run_until_complete(asyncio.gather(*tasks))
