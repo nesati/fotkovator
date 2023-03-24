@@ -91,7 +91,11 @@ async def edit():
     elif action == 'rename':
         new_name = (await request.form)['new-tagname'].strip()
         if new_name:
-            await app.config['bus'].emit('rename_tag', (tagname, new_name))
+            try:
+                await app.config['bus'].emit('rename_tag', (tagname, new_name))
+            except AssertionError:
+                return await render_template('error.html', code=400, message='Špatný požadavek',
+                                             body="Nelze přejmenovat štítek na již existující název štítku."), 400
     elif action == 'add':
         new_name = (await request.form)['add-tagname'].strip()
         if new_name:
