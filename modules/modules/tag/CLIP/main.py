@@ -12,8 +12,8 @@ class CLIPTagger(TagModule):
     Uses openAI's CLIP to add tags for any configured visual concept.
     """
 
-    def __init__(self, bus, database, backend, loop, config):
-        super().__init__(bus, database, backend, loop)
+    def __init__(self, bus, database, backend, search, loop, config):
+        super().__init__(bus, database, backend, search, loop)
 
         # load clip model
         self.device = "cuda" if torch.cuda.is_available() else "cpu"

@@ -4,8 +4,12 @@ backend:
   max_concurrency: 16
 
 database:
-  module: PostgreSQL
+  module: PostgreSQL_kNN
   password: mysecretpassword
+
+search:
+  module: CLIP
+
 
 modules:
   - module: tag.metadata

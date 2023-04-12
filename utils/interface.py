@@ -204,10 +204,11 @@ class Backend(Module):
 
 
 class BasicModule(Module):
-    def __init__(self, bus, database, backend, loop):
+    def __init__(self, bus, database, backend, search, loop):
         self.bus = bus
         self.database = database
         self.backend = backend
+        self.search = search
         self.loop = loop
 
 
@@ -216,8 +217,8 @@ class Frontend(BasicModule):
 
 
 class TagModule(BasicModule):
-    def __init__(self, bus, database, backend, loop):
-        super().__init__(bus, database, backend, loop)
+    def __init__(self, bus, database, backend, search, loop):
+        super().__init__(bus, database, backend, search, loop)
 
         self.bus.add_listener('new_image', lambda img: self.tag(*img))
 
@@ -232,3 +233,19 @@ class TagModule(BasicModule):
         :param metadata: dict: additional information about the image
         """
         raise NotImplementedError('TagModule must implement tag function')
+
+
+class SearchModule(Module):
+    def __init__(self, bus, database, backend, loop):
+        self.bus = bus
+        self.database = database
+        self.backend = backend
+        self.loop = loop
+
+    def search(self, query):
+        raise NotImplementedError()
+
+
+class KNNCapability(Database):
+    def knn_query(self, module, table, column, vector, distance='L2', limit=None, offset=0):
+        raise NotImplementedError('KNN capable database must implement knn_query mathod')

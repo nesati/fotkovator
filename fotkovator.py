@@ -38,11 +38,13 @@ if __name__ == '__main__':
 
     backend = load_module('backend', config['backend']['module']).Backend(bus, database, loop, config['backend'])
 
+    search = load_module('search', config['search']['module']).Search(bus, database, backend, loop, config['search'])
+
     modules = []
     for module in config['modules']:
-        modules.append(load_module('modules', module['module']).Module(bus, database, backend, loop, module).run_forever())
+        modules.append(load_module('modules', module['module']).Module(bus, database, backend, search, loop, module).run_forever())
 
-    tasks = [database.run_forever(), backend.run_forever()]
+    tasks = [database.run_forever(), backend.run_forever(), search.run_forever()]
     tasks = tuple(map(loop.create_task, filter(lambda corutine: corutine is not None, modules + tasks)))
 
     signals = (signal.SIGTERM, signal.SIGINT)

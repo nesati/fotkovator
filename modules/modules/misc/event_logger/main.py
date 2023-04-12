@@ -18,8 +18,8 @@ EVENTS = {
 
 
 class EventLogger(BasicModule):
-    def __init__(self, bus, database, backend, loop, config):
-        super().__init__(bus, database, backend, loop)
+    def __init__(self, bus, database, backend, search, loop, config):
+        super().__init__(bus, database, backend, search, loop)
 
         for e in EVENTS:
             self.bus.add_listener(e, partial(self.log, e))

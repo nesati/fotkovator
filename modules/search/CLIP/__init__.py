@@ -1,0 +1,1 @@
+from modules.search.CLIP.main import CLIPSearch as Search

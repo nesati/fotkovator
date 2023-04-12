@@ -15,10 +15,10 @@ executor = concurrent.futures.ProcessPoolExecutor()
 
 
 class FaceTagger(TagModule):
-    def __init__(self, bus, database, backend, loop, config):
-        super().__init__(bus, database, backend, loop)
+    def __init__(self, bus, database, backend, search, loop, config):
+        super().__init__(bus, database, backend, search, loop)
 
-        self.face_db = config.get('db_path', 'face.pickle')
+        self.face_db = config.get('db_path', 'face.pickle') # TODO move to new db system
 
         if os.path.exists(self.face_db):
             with open(self.face_db, 'rb') as f:

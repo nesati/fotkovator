@@ -19,8 +19,8 @@ class MetadataTagger(TagModule):
     Adds tags for folder names.
     """
 
-    def __init__(self, bus, database, backend, loop, config):
-        super().__init__(bus, database, backend, loop)
+    def __init__(self, bus, database, backend, search, loop, config):
+        super().__init__(bus, database, backend, search, loop)
 
     async def tag(self, uid, db_ready, img, uri, created, metadata):
         # wait for database
