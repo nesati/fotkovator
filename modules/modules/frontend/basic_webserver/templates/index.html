@@ -9,10 +9,6 @@
 	<script src="https://code.jquery.com/jquery-3.6.3.min.js"
 			integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
 
-	<!-- jQuery UI -->
-	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-	<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-
 	<!-- Bootstrap CSS -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
 		  integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
@@ -21,14 +17,11 @@
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
 		  rel="stylesheet">
 
-	<!-- Tag input -->
-	<link rel="stylesheet"
-		  href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css"
-		  integrity="sha512-xmGTNt20S0t62wHLmQec2DauG9T+owP9e6VU8GigI0anN7OXLip9i7IwEhelasml2osdxX71XcYm6BQunTQeQg=="
-		  crossorigin="anonymous"/>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.js"
-			integrity="sha512-VvWznBcyBJK71YKEKDMpZ0pCVxjNuKwApp4zLF3ul+CiflQi6aIJR+aZCP/qWsoFBA28avL5T5HA+RE+zrGQYg=="
-			crossorigin="anonymous"></script>
+	<!-- Include Tribute.js style. -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.css">
+
+	<!-- Include Tribute.js javascript. -->
+	<script src="https://cdn.jsdelivr.net/npm/tributejs@5.1.3/dist/tribute.js"></script>
 
 	<title>Fotkovátor</title>
 	<style>
@@ -67,47 +60,48 @@
 			grid-row: span 2;
 		}
 
-		.bootstrap-tagsinput {
-			width: 100%;
-			display: flex;
-			flex-wrap: wrap;
+		#searchbar-container {
+			position: relative;
 		}
+
+		.tribute-container li {
+			padding: 0;
+		}
+
+		.tribute-container li span {
+			padding: 5px;
+			filter: saturate(50%);
+			display: block;
+			font-weight: normal;
+		}
+
+		.tribute-container li span span {
+			font-weight: bold;
+			display: inline;
+			padding: 0;
+			margin: 0;
+		}
+
+		.tribute-container li.highlight span {
+			filter: saturate(100%);
+			font-weight: bold;
+		}
+
 		.badge {
-			padding: 0 1em;
 			font-weight: unset;
-		}
-		.tag [data-role="remove"]::after {
-			content: "close" !important;
-			vertical-align: bottom;
-			/* https://fonts.googleapis.com/icon?family=Material+Icons */
-			font-family: 'Material Icons';
-			direction: ltr;
-			-moz-font-feature-settings: 'liga';
-			-moz-osx-font-smoothing: grayscale;
-		}
-		.tag [data-role="remove"]:hover {
-			box-shadow: none !important;
-		}
-		.bootstrap-tagsinput  {
-			height: 100%;
-		}
-		.ui-autocomplete-input {
-			flex-grow: 1;
-		}
-		.ui-autocomplete-input, .badge {
-			height: 2em;
-			line-height: 2em;
-			font-size: 1em;
+			font-size: 1rem;
 		}
 	</style>
 </head>
 <body>
 <main class="container py-3">
 	<a href="/" class="text-dark text-decoration-none"><h1>Fotkovátor</h1></a>
-	<form class="mb-3 row" action="/search">
+	<form class="mb-3 row" action="/search" id="search">
 		<div class="col">
-			<input data-role="tagsinput" type="text" value="{{ querry }}" class="tagAutoComplete d-none"
-				   placeholder="Vyhledávání..." aria-label="Vyhledávání" name="tag">
+			<div id="searchbar-container">
+				<input hidden="" value="" name="tag" id="search-form">
+				<p id="searchbar" class="form-control m-0 d-none">{{ querry }}</p>
+			</div>
 		</div>
 		<div class="col-3 col-sm-2 col-md-2 col-lg-1 col-xl-1 col-xxl-1">
 			<button type="submit" class="btn btn-primary py-0 w-100 h-100">
@@ -121,7 +115,8 @@
 			<a class="grid-image {% if image.big %}big{% endif %} position-relative p-0"
 			   href="/detail?uid={{ image.uid | safe }}">
 				<div class="ratio ratio-1x1 rounded p-0"
-					 style='background-image: url("/img?uid={{ image.uid | safe }}{% if not image.big %}&small{% endif %}");background-size: cover;background-position: center;'>
+					 style='background-image: url("/img?uid={{ image.uid | safe }}{% if not image.big %}&small{% endif %}");
+							 background-size: cover;background-position: center;'>
 				</div>
 				{% if not image.done %}
 					<!-- processing image -->
@@ -151,7 +146,8 @@
 				{% endif %}
 			{% endfor %}
 			<li class="page-item">
-				<a class="page-link" href="{{ request.path }}?tag={{ querry | urlencode }}&p={{ (n_pages - 1) | safe }}" aria-label="Last">
+				<a class="page-link" href="{{ request.path }}?tag={{ querry | urlencode }}&p={{ (n_pages - 1) | safe }}"
+				   aria-label="Last">
 					<span class="d-none d-lg-inline">Nejstarší</span>
 					<span aria-hidden="true">&raquo;</span>
 				</a>
@@ -165,113 +161,86 @@
 		integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
 		crossorigin="anonymous"></script>
 <script>
-	const confirm = [
-		13, // Enter
-	]
-	const sep = [
-		32, // Space
-		188, // Comma
-		186, // Semicolon
-		9, // Tab
-	]
-	let results;
-	let submitOnRemove = false;
-	let availableTags;
-	let tagColors = {}
-	const tagInput = $('.tagAutoComplete');
-	tagInput.tagsinput({
-		tagClass: 'badge rounded-pill mx-1',
-		confirmKeys: [],
-	});
-	tagInput.on('itemRemoved', function (event) {
-		if (submitOnRemove) {
-			tagInput.form().submit()
-		}
-		availableTags.push(event.item)
-	});
-	tagInput.on('beforeItemAdd', function (event) {
-		if (!event.options || !event.options.checked) {
-			event.cancel = true
-			let idx = availableTags.findIndex(element => element.toLowerCase() === event.item.toLowerCase())
-			if (idx > -1) {
-				tagInput.tagsinput('add', availableTags[idx], {checked: true});
-			}
-		}
-	});
+	const searchbar = $('#searchbar')
 
-	function refreshTags(e) {
-		Array.prototype.forEach.call($('.bootstrap-tagsinput span.tag'), el => {
-			// set tag colors
-			let tag = tagColors[el.innerText];
-			if (tag === undefined) {
-				return;
-			}
-			el.style.color = tag.text_color;
-			el.style.backgroundColor = tag.color;
+	const input = searchbar.text().split(',')
+	searchbar.text(' ')
 
-			// register click listener for submitting on remove
-			$(el.children[0]).click(e => {
-				submitOnRemove = true;
-			});
-		});
+	format_data = ev => {
+		document.getElementById('search-form').value = Array.from(searchbar[0].childNodes).map(node => {
+			if (node.nodeName === "#text") {
+				return node.nodeValue
+			}
+			if (node.nodeName === "SPAN") {
+				return node.innerText
+			}
+			return ''
+		}).join(',')
 	}
 
-	tagInput.on('itemAdded', refreshTags);
-	tagInput.on('itemAddedOnInit', refreshTags);
+	document.getElementById('search').onsubmit = format_data
+
 	fetch('/tags').then(r => {
 		r.json().then(fetchedTags => {
-			availableTags = fetchedTags.map(x => x.alias);
-			fetchedTags.forEach(tag => {
-				tagColors[tag.alias] = tag;
-			});
-			refreshTags({});
-			tagInput.val().split(',').forEach(tag => {
-				let i = availableTags.indexOf(tag)
-				if (i > -1) {
-					availableTags.splice(i, 1);
-				}
-			});
-			const textInput = $('.bootstrap-tagsinput input')
-			textInput.autocomplete({
-				source: availableTags,
-				select: function (event, ui) {
-					let value = ui.item.value;
-					tagInput.tagsinput('add', value);
-					let i = availableTags.indexOf(value);
-					if (i > -1) {
-						availableTags.splice(i, 1);
-					}
-					event.preventDefault();
-					textInput.val('');
-				},
-				response: function(event, ui) {
-					results = ui.content.map(function(item) {
-						return item.value;
-					});
-				}
-			});
-			textInput.keypress(function (event) {
-				if (confirm.indexOf(event.charCode) !== -1) {
-					event.preventDefault()
-					if (event.target.value !== '') {
-						tagInput.tagsinput('add', event.target.value)
-						event.target.value = '';
-					} else {
-						event.target.form.submit()
-					}
-				} else if (sep.indexOf(event.charCode) !== -1) {
-					textInput.autocomplete("search", event.target.value + event.key)
+			const availableTags = fetchedTags.map(x => x.alias)
 
-					// check if character not used in tag name
-					results = undefined;
-					textInput.autocomplete("search", event.target.value + event.key)
-					if (results.length === 0) {
-						event.preventDefault()
-						tagInput.tagsinput('add', event.target.value)
-						event.target.value = '';
-					}
+			let html = "";
+			input.forEach(node => {
+				const idx = availableTags.indexOf(node)
+				if (idx !== -1) {
+					html += '<span contenteditable="false" class="badge rounded-pill mx-1 py-1" style="color: ' +
+						fetchedTags[idx].text_color +
+						';background-color: ' +
+						fetchedTags[idx].color +
+						'">' +
+						fetchedTags[idx].alias +
+						'</span>'
+				} else {
+					html += node
+				}
+			})
+			searchbar.html(html)
+
+			const tribute = new Tribute({
+				autocompleteMode: true,
+				noMatchTemplate: "",
+				values: fetchedTags,
+				selectTemplate: function (item) {
+					return (
+						'<span contenteditable="false" class="badge rounded-pill mx-1 py-1" style="color: ' +
+						item.original.text_color +
+						';background-color: ' +
+						item.original.color +
+						'">' +
+						item.original.alias +
+						'</span>'
+					);
+				},
+				menuItemTemplate: function (item) {
+					return (
+						'<span style="color: ' +
+						item.original.text_color +
+						';background-color: ' +
+						item.original.color +
+						'">' +
+						item.string +
+						'</span>'
+					);
+				},
+				lookup: 'alias',
+				menuContainer: document.getElementById("searchbar-container"),
+			});
+
+			tribute.attach(searchbar);
+
+			searchbar.keypress(event => {
+				if (event.charCode === 13) {
+					event.preventDefault()
+					format_data(event)
+					document.getElementById('search').submit()
 				}
 			});
+			searchbar.removeClass('d-none')
 		});
 	});
 </script>
