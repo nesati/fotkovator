@@ -30,12 +30,18 @@ class PostgresKNNDatabase(PostgreDatabase, KNNCapability):
         sql_columns = []
         sql_extra = []
         for column in columns:
+            column['name'] = self._sanitize(column['name'])
             sql_colum = column['name'] + ' '
             if column['type'] == 'vector':
                 sql_colum += f"vector({column['n_dim']}) "
                 if 'optimize' in column:
-                    sql_extra.append(
-                        f"CREATE INDEX ON {table} USING ivfflat ({column['name']} vector_{column['optimize']}_ops) WITH (lists = 100);")
+                    assert column['optimize'] in ['l2', 'ip', 'cosine']
+                    sql_extra.append(f"""
+                        CREATE INDEX
+                        ON {self._table_name(module, table)}
+                        USING ivfflat ({column['name']} vector_{column['optimize']}_ops)
+                        WITH (lists = 100);
+                    """)
             elif column['type'] == 'int' or column['type'] == 'integer':
                 sql_colum += 'integer '
             else:
@@ -55,16 +61,20 @@ class PostgresKNNDatabase(PostgreDatabase, KNNCapability):
 
             await conn.execute(f"""
                CREATE TABLE IF NOT EXISTS
-               {table}
+               {self._table_name(module, table)}
                ({','.join(sql_columns)});
-               """) #  + ';'.join(sql_extra)
+            """)  # + ';'.join(sql_extra)
 
     async def knn_add(self, module, table, data):
         await self.db_ready.wait()
         data = OrderedDict(data)
         async with self.pool.acquire() as conn:
             await register_vector(conn)
-            await conn.execute(f"""INSERT INTO {table}({', '.join(data.keys())}) VALUES ({', '.join(map(lambda i: f"${i+1}", range(len(data))))})""", *data.values())
+            await conn.execute(f"""
+                INSERT INTO {self._table_name(module, table)}({', '.join(map(self._sanitize, data.keys()))})
+                VALUES ({', '.join(map(lambda i: f"${i + 1}", range(len(data))))})
+            """, *data.values())
+
 
     async def knn_query(self, module, table, column, vector, distance='L2', limit=None, offset=0, selector={}):
         await self.db_ready.wait()
@@ -74,26 +84,11 @@ class PostgresKNNDatabase(PostgreDatabase, KNNCapability):
         async with self.pool.acquire() as conn:
             await register_vector(conn)
 
-            i = 4
-            sql = f"""
+            return await conn.fetch(f"""
                 SELECT *
-                FROM {table}
-                """
-            if len(selector) > 0:
-                sql += "WHERE\n"
-                for key in selector.keys():
-                    if not sql.endswith('WHERE\n'):
-                        sql += 'OR'
-                    if isinstance(selector[key], (int, str)):
-                        sql += f'{key} = ${i}\n'
-                    elif isinstance(selector[key], Iterable):
-                        sql += f'{key} = ANY(${i})\n'
-                    else:
-                        raise NotImplementedError()
-                    i += 1
-
-            sql += f"""ORDER BY {column} {OPERATORS[distance]} $1
+                FROM {self._table_name(module, table)}
+                {self._convert_selectors(selector, i=4)[0]}
+                ORDER BY {self._sanitize(column)} {OPERATORS[distance]} $1
                 LIMIT $2 OFFSET $3;
-                """
+            """, vector, limit, offset, *selector.values())
 
-            return await conn.fetch(sql, vector, limit, offset, *selector.values())

@@ -1,4 +1,6 @@
 import asyncio
+import re
+from typing import Iterable
 
 import asyncpg
 
@@ -258,6 +260,53 @@ class PostgreDatabase(Database):
         async with self.pool.acquire() as conn:
             await conn.execute('DELETE FROM images;')
             await conn.execute('DELETE FROM tags;')
+
+    def _convert_selector(self, key, value, i):
+        key = self._sanitize(key)  # WARNING: Do not omit this in any method extending this functionality
+        if isinstance(value, (int, str)):
+            return f'{key} = ${i}\n'
+        elif isinstance(value, Iterable):
+            return f'{key} = ANY(${i})\n'
+        else:
+            raise NotImplementedError()
+
+    def _convert_selectors(self, selector, i=1):
+        """
+        Convert from selector dict to WHERE statement.
+
+        :param selector: dict: selector in the format {column: value}
+        :param i: int: starting i to be used in asyncpg $i syntax
+        :return: str: sql WHERE statement
+        """
+        sql = ""
+        if len(selector) > 0:
+            sql += "WHERE\n"
+            for key in selector.keys():
+                if not sql.endswith('WHERE\n'):
+                    sql += ' AND \n'
+                sql += self._convert_selector(key, selector[key], i)
+                i += 1
+        return sql, i
+
+    def _sanitize(self, text):
+        """
+        Ensure string is ASCII alphanumeric.
+        """
+        text = re.sub(r"[^A-Za-z0-9]+", '', text)
+        assert text
+        return text
+
+    def _table_name(self, module, table):
+        """
+        Get the table name based on the module, and it's table name.
+
+        TODO figure out a way to differentiate multiple instances of the same module between runs
+
+        :param module: object: reference to the module instance
+        :param table: str: name of the table
+        :return: str: name of the table to be used in sql queries
+        """
+        return self._sanitize(module.__class__.__name__)+'_'+self._sanitize(table)
 
     def run_forever(self):
         return self.check_database()
