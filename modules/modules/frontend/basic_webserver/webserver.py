@@ -39,10 +39,7 @@ async def search():
 
     tagnames = list(filter(bool, map(lambda s: s.strip(), request.args['tag'].split(','))))
 
-    if len(tagnames) > 0:
-        images, n_imgs = await app.config['search'].search(tagnames, page=page, limit=PAGE)
-    else:
-        images, n_imgs = await app.config['database'].list_images(page=page, limit=PAGE)
+    images, n_imgs = await app.config['search'].search(tagnames, page=page, limit=PAGE)
 
     n_pages = math.ceil(n_imgs / PAGE)
     return await render_template("index.html", querry=request.args['tag'], images=images, page=page, n_pages=n_pages)

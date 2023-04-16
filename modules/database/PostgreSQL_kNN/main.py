@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from typing import Iterable
 
 from modules.database.PostgreSQL.main import PostgreDatabase
 from utils.interface import KNNCapability
@@ -65,14 +66,34 @@ class PostgresKNNDatabase(PostgreDatabase, KNNCapability):
             await register_vector(conn)
             await conn.execute(f"""INSERT INTO {table}({', '.join(data.keys())}) VALUES ({', '.join(map(lambda i: f"${i+1}", range(len(data))))})""", *data.values())
 
-    async def knn_query(self, module, table, column, vector, distance='L2', limit=None, offset=0):
+    async def knn_query(self, module, table, column, vector, distance='L2', limit=None, offset=0, selector={}):
         await self.db_ready.wait()
+
+        selector = OrderedDict(selector)
 
         async with self.pool.acquire() as conn:
             await register_vector(conn)
-            return await conn.fetch(f"""
+
+            i = 4
+            sql = f"""
                 SELECT *
                 FROM {table}
-                ORDER BY {column} {OPERATORS[distance]} $1
+                """
+            if len(selector) > 0:
+                sql += "WHERE\n"
+                for key in selector.keys():
+                    if not sql.endswith('WHERE\n'):
+                        sql += 'OR'
+                    if isinstance(selector[key], (int, str)):
+                        sql += f'{key} = ${i}\n'
+                    elif isinstance(selector[key], Iterable):
+                        sql += f'{key} = ANY(${i})\n'
+                    else:
+                        raise NotImplementedError()
+                    i += 1
+
+            sql += f"""ORDER BY {column} {OPERATORS[distance]} $1
                 LIMIT $2 OFFSET $3;
-                """, vector, limit, offset)
+                """
+
+            return await conn.fetch(sql, vector, limit, offset, *selector.values())

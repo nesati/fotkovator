@@ -109,6 +109,9 @@ class PostgreDatabase(Database):
     async def search(self, tagnames, **kwargs):
         await self.db_ready.wait()
 
+        if len(tagnames) == 0:
+            return await self.list_images(**kwargs)
+
         tag_ids = await asyncio.gather(*map(self._get_tag_id, tagnames))
 
         async with self.pool.acquire() as conn:

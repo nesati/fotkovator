@@ -46,7 +46,12 @@ class CLIPSearch(SearchModule):
 
         # preprocess query
         if isinstance(query, list):
-            query = ' '.join(query)
+            taglist = set(map(lambda x: x['name'], await self.database.list_tags()))
+            tags = list(filter(lambda fragment: fragment in taglist, query))
+            tagged, n_images = await self.database.search(tags)
+            query = ' '.join(filter(lambda fragment: fragment not in taglist, query))
+        else:
+            tagged, n_images = await self.database.search([query])
 
         if 'page' in kwargs:
             kwargs = {
@@ -54,12 +59,15 @@ class CLIPSearch(SearchModule):
                 'offset': kwargs['page'] * kwargs['limit']
             }
 
+        tagged = {img['uid']: img for img in tagged}
+        kwargs['selector'] = {'uid': list(tagged.keys())}
+
         embedding = await self.loop.run_in_executor(None, self._CLIP_embed_text, query)
         embedding = embedding[0].cpu().numpy()
+        order = await self.database.knn_query(self, 'embedings', 'embed', embedding, distance='cosine', **kwargs)
+        out = map(lambda row: tagged[row['uid']], order)
 
-        out = await self.database.knn_query(self, 'embedings', 'embed', embedding, distance='cosine', **kwargs)
-
-        return list(map(dict, out)), 100000
+        return list(map(dict, out)), n_images
 
     async def run_forever(self):
         await self.database.ensure_knn_index(self, 'embedings', (
