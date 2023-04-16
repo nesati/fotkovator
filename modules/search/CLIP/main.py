@@ -46,7 +46,7 @@ class CLIPSearch(SearchModule):
 
         # preprocess query
         if isinstance(query, list):
-            taglist = set(map(lambda x: x['name'], await self.database.list_tags()))
+            taglist = set(map(lambda x: x['alias'], await self.database.list_tags()))
             tags = list(filter(lambda fragment: fragment in taglist, query))
             tagged, n_images = await self.database.search(tags)
             query = ' '.join(filter(lambda fragment: fragment not in taglist, query))
