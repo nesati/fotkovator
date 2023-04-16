@@ -53,19 +53,27 @@ class CLIPSearch(SearchModule):
         else:
             tagged, n_images = await self.database.search([query])
 
-        if 'page' in kwargs:
-            kwargs = {
-                'limit': kwargs['limit'],
-                'offset': kwargs['page'] * kwargs['limit']
-            }
+        # clean str
+        query = query.strip()
 
-        tagged = {img['uid']: img for img in tagged}
-        kwargs['selector'] = {'uid': list(tagged.keys())}
+        if query:
+            if 'page' in kwargs:
+                kwargs = {
+                    'limit': kwargs['limit'],
+                    'offset': kwargs['page'] * kwargs['limit']
+                }
 
-        embedding = await self.loop.run_in_executor(None, self._CLIP_embed_text, query)
-        embedding = embedding[0].cpu().numpy()
-        order = await self.database.knn_query(self, 'embedings', 'embed', embedding, distance='cosine', **kwargs)
-        out = map(lambda row: tagged[row['uid']], order)
+            tagged = {img['uid']: img for img in tagged}
+            kwargs['selector'] = {'uid': list(tagged.keys())}
+
+            embedding = await self.loop.run_in_executor(None, self._CLIP_embed_text, query)
+            embedding = embedding[0].cpu().numpy()
+            order = await self.database.knn_query(self, 'embedings', 'embed', embedding, distance='cosine', **kwargs)
+            out = map(lambda row: tagged[row['uid']], order)
+        else:
+            if 'page' in kwargs:
+                tagged = tagged[kwargs['page'] * kwargs['limit']:(kwargs['page'] + 1) * kwargs['limit']]
+            out = tagged
 
         return list(map(dict, out)), n_images
 
