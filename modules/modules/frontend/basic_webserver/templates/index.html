@@ -91,6 +91,11 @@
 			font-weight: unset;
 			font-size: 1rem;
 		}
+		.remove {
+			cursor: pointer;
+			vertical-align: bottom;
+			font-size: unset;
+		}
 	</style>
 </head>
 <body>
@@ -177,13 +182,17 @@
 				}
 			}
 			if (node.nodeName === "SPAN") {
-				return node.innerText
+				return node.childNodes[0].nodeValue
 			}
 			return ''
 		}).join(',')
 	}
 
 	document.getElementById('search').onsubmit = format_data
+
+	function remove_click_handler(e) {
+			e.target.parentElement.remove()
+	}
 
 	function crate_tag_el(tagdata) {
 		const tag = $('<span>')
@@ -192,6 +201,15 @@
 		tag.css('background-color', tagdata.color)
 		tag.addClass(['badge', 'rounded-pill', 'mx-1','py-1'])
 		tag.text(tagdata.alias)
+
+		const remove = $('<i>')
+		remove.addClass(['material-icons', 'remove'])
+		remove.text('close')
+		// this has to be done because tribute.js uses html strings instead of elements
+		// for adding tags see https://github.com/zurb/tribute/issues/885
+		remove.attr('onclick','remove_click_handler(event);')
+		tag.append(remove)
+
 		return tag
 	}
 
