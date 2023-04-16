@@ -165,7 +165,6 @@
 
 	// add spaces to both sides to make editable around tags
 	const input = (' ,'+searchbar.text()+', ').split(',')
-	searchbar.text(' ')
 
 	format_data = ev => {
 		document.getElementById('search-form').value = Array.from(searchbar[0].childNodes).map(node => {
@@ -189,6 +188,7 @@
 	fetch('/tags').then(r => {
 		r.json().then(fetchedTags => {
 			const availableTags = fetchedTags.map(x => x.alias)
+			searchbar.text(' ')
 
 			input.forEach(node => {
 				const idx = availableTags.indexOf(node)
