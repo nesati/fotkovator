@@ -21,6 +21,7 @@ class CLIPSearch(SearchModule):
         self.db_ready = asyncio.Event()
 
         self.bus.add_listener('new_image', lambda img: self.add_image(*img))
+        self.bus.add_listener('img_removed', self.remove_image)
 
     async def add_image(self, uid, db_ready, img, uri, dt, metadata):
         await self.db_ready.wait()
@@ -31,6 +32,11 @@ class CLIPSearch(SearchModule):
         embedding = embedding[0].cpu().numpy()
 
         await self.database.knn_add(self, 'embedings', {'embed': embedding, 'uid': uid})
+
+    async def remove_image(self, uid):
+        await self.db_ready.wait()
+
+        await self.database.knn_remove(self, 'embedings', {'uid': uid})
 
     def _CLIP_embed_image(self, image):
         with torch.no_grad():

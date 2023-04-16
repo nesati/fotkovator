@@ -75,6 +75,15 @@ class PostgresKNNDatabase(PostgreDatabase, KNNCapability):
                 VALUES ({', '.join(map(lambda i: f"${i + 1}", range(len(data))))})
             """, *data.values())
 
+    async def knn_remove(self, module, table, selector):
+        await self.db_ready.wait()
+        data = OrderedDict(selector)
+        async with self.pool.acquire() as conn:
+            await register_vector(conn)
+            await conn.execute(f"""
+                DELETE FROM {self._table_name(module, table)}
+                {self._convert_selectors(selector)[0]}
+            """, *selector.values())
 
     async def knn_query(self, module, table, column, vector, distance='L2', limit=None, offset=0, selector={}):
         await self.db_ready.wait()
