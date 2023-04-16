@@ -185,6 +185,16 @@
 
 	document.getElementById('search').onsubmit = format_data
 
+	function crate_tag_el(tagdata) {
+		const tag = $('<span>')
+		tag.attr('contenteditable','false')
+		tag.css('color', tagdata.text_color)
+		tag.css('background-color', tagdata.color)
+		tag.addClass(['badge', 'rounded-pill', 'mx-1','py-1'])
+		tag.text(tagdata.alias)
+		return tag
+	}
+
 	fetch('/tags').then(r => {
 		r.json().then(fetchedTags => {
 			const availableTags = fetchedTags.map(x => x.alias)
@@ -193,12 +203,7 @@
 			input.forEach(node => {
 				const idx = availableTags.indexOf(node)
 				if (idx !== -1) {
-					const tag = $('<span>')
-					tag.attr('contenteditable','false')
-					tag.css('color', fetchedTags[idx].text_color)
-					tag.css('background-color', fetchedTags[idx].color)
-					tag.addClass(['badge', 'rounded-pill', 'mx-1','py-1'])
-					tag.text(fetchedTags[idx].alias)
+					const tag = crate_tag_el(fetchedTags[idx])
 					searchbar.append(tag)
 				} else {
 					// empty text must be converted to non-breaking space to work properly
@@ -214,26 +219,13 @@
 				noMatchTemplate: "",
 				values: fetchedTags,
 				selectTemplate: function (item) {
-					return (
-						'<span contenteditable="false" class="badge rounded-pill mx-1 py-1" style="color: ' +
-						item.original.text_color +
-						';background-color: ' +
-						item.original.color +
-						'">' +
-						item.original.alias +
-						'</span>'
-					);
+					return crate_tag_el(item.original)[0].outerHTML
 				},
 				menuItemTemplate: function (item) {
-					return (
-						'<span style="color: ' +
-						item.original.text_color +
-						';background-color: ' +
-						item.original.color +
-						'">' +
-						item.string +
-						'</span>'
-					);
+					const tag = crate_tag_el(item.original)
+					tag.removeClass()
+					tag.html(item.string)
+					return tag[0].outerHTML
 				},
 				lookup: 'alias',
 				menuContainer: document.getElementById("searchbar-container"),
