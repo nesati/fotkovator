@@ -163,7 +163,8 @@
 <script>
 	const searchbar = $('#searchbar')
 
-	const input = searchbar.text().split(',')
+	// add spaces to both sides to make editable around tags
+	const input = (' ,'+searchbar.text()+', ').split(',')
 	searchbar.text(' ')
 
 	format_data = ev => {
@@ -184,22 +185,24 @@
 		r.json().then(fetchedTags => {
 			const availableTags = fetchedTags.map(x => x.alias)
 
-			let html = "";
 			input.forEach(node => {
 				const idx = availableTags.indexOf(node)
 				if (idx !== -1) {
-					html += '<span contenteditable="false" class="badge rounded-pill mx-1 py-1" style="color: ' +
-						fetchedTags[idx].text_color +
-						';background-color: ' +
-						fetchedTags[idx].color +
-						'">' +
-						fetchedTags[idx].alias +
-						'</span>'
+					const tag = $('<span>')
+					tag.attr('contenteditable','false')
+					tag.css('color', fetchedTags[idx].text_color)
+					tag.css('background-color', fetchedTags[idx].color)
+					tag.addClass(['badge', 'rounded-pill', 'mx-1','py-1'])
+					tag.text(fetchedTags[idx].alias)
+					searchbar.append(tag)
 				} else {
-					html += node
+					// empty text must be converted to non-breaking space to work properly
+					if (node.trim() === '') {
+						node = '\u00A0' // nbsp
+					}
+					searchbar.append(document.createTextNode(node))
 				}
 			})
-			searchbar.html(html)
 
 			const tribute = new Tribute({
 				autocompleteMode: true,

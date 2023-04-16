@@ -37,12 +37,13 @@ async def search():
     else:
         page = 0
 
-    tagnames = list(filter(bool, map(lambda s: s.strip(), request.args['tag'].split(','))))
+    # remove emtpy nodes; convert nbsp to normal space
+    tagnames = list(filter(bool, map(lambda s: s.replace('\u00A0', ' ').strip(), request.args['tag'].split(','))))
 
     images, n_imgs = await app.config['search'].search(tagnames, page=page, limit=PAGE)
 
     n_pages = math.ceil(n_imgs / PAGE)
-    return await render_template("index.html", querry=request.args['tag'], images=images, page=page, n_pages=n_pages)
+    return await render_template("index.html", querry=','.join(tagnames), images=images, page=page, n_pages=n_pages)
 
 
 @app.route("/detail/")
