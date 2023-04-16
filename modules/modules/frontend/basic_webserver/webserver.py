@@ -37,8 +37,11 @@ async def search():
     else:
         page = 0
 
-    # remove emtpy nodes; convert nbsp to normal space
-    tagnames = list(filter(bool, map(lambda s: s.replace('\u00A0', ' ').strip(), request.args['tag'].split(','))))
+    # convert nbsp to normal space
+    tagnames = map(lambda s: s.replace('\u00A0', ' '), request.args['tag'].split(','))
+
+    # remove emtpy nodes
+    tagnames = list(filter(lambda s: bool(s.strip()), tagnames))
 
     images, n_imgs = await app.config['search'].search(tagnames, page=page, limit=PAGE)
 

@@ -170,7 +170,12 @@
 	format_data = ev => {
 		document.getElementById('search-form').value = Array.from(searchbar[0].childNodes).map(node => {
 			if (node.nodeName === "#text") {
-				return node.nodeValue
+				// add space to indicate it is not a tag (tags are trimmed)
+				if (node.nodeValue.endsWith(' ')) {
+					return node.nodeValue
+				} else {
+					return node.nodeValue + ' '
+				}
 			}
 			if (node.nodeName === "SPAN") {
 				return node.innerText
