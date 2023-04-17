@@ -35,11 +35,10 @@ class PostgresKNNDatabase(PostgreDatabase, KNNCapability):
             if column['type'] == 'vector':
                 sql_colum += f"vector({column['n_dim']}) "
                 if 'optimize' in column:
-                    assert column['optimize'] in ['l2', 'ip', 'cosine']
                     sql_extra.append(f"""
                         CREATE INDEX
                         ON {self._table_name(module, table)}
-                        USING ivfflat ({column['name']} vector_{column['optimize']}_ops)
+                        USING ivfflat ({column['name']} vector_{INDEX[column['optimize']]}_ops)
                         WITH (lists = 100);
                     """)
             elif column['type'] == 'int' or column['type'] == 'integer':
