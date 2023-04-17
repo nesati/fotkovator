@@ -180,6 +180,10 @@ Modul vyžaduje databázi s podporou vektorů (např.: [`database.PostgreSQL_kNN
 pip install -r modules/search/CLIP/requirements.txt
 ```
 
+#### Argumenty
+
+`model` - (volitelný, výchozí hodnota: `ViT-B/32`) verze CLIPu, kterou požívat
+
 #### Příklad konfigurace
 
 ```yam
