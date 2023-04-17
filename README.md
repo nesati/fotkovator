@@ -112,7 +112,7 @@ docker run --name fotkovatordb \
            -p 5432:5432 \
            -e POSTGRES_PASSWORD=mysecretpassword \
            -e POSTGRES_USER=fotkovator \
-           -d ankane/pgvector
+           -d postgres
 ```
 
 #### Argumenty
@@ -133,6 +133,58 @@ docker run --name fotkovatordb \
 database:
   module: PostgreSQL
   password: mysecretpassword
+```
+
+### Vektorový PostgreSQL
+
+Modul `database.PostgreSQL_kNN` implementuje klient pro [PostgreSQL](https://www.postgresql.org/)) s pluginem 
+[pgvector](https://github.com/pgvector/pgvector), který umožňuje vektorové operace. Vyžaduje externí server.
+
+#### Instalace
+
+Závislosti klienta lze nainstalovat přes `pip`.
+
+```shell
+pip install -r modules/database/PostgreSQL_kNN/requirements.txt
+```
+
+Je nutné nainstalovat také server. Například přes [docker](https://www.docker.com/):
+
+```shell
+docker run --name fotkovatordb \
+           -p 5432:5432 \
+           -e POSTGRES_PASSWORD=mysecretpassword \
+           -e POSTGRES_USER=fotkovator \
+           -d ankane/pgvector
+```
+
+#### Argumenty
+
+Stejné jako [Postges](#postgresql)
+
+#### Příklad konfigurace
+
+Stejné jako [Postges](#postgresql)
+
+### CLIP vyhledávání
+
+[CLIP](https://openai.com/research/clip) je neuronová síť propojující obrázky a text. Modul `search.CLIP` tuto 
+schopnost využívá k seřazování výsledků vyhledávání podle štítků. Vyhledávejte pokud možno v angličtině viz [první CLIP 
+modul](#clip).
+
+#### Instalace
+
+Modul vyžaduje databázi s podporou vektorů (např.: [`database.PostgreSQL_kNN`](#vektorový-postgresql)).
+
+```shell
+pip install -r modules/search/CLIP/requirements.txt
+```
+
+#### Příklad konfigurace
+
+```yam
+search:
+  module: CLIP
 ```
 
 ### Webové rozhraní
