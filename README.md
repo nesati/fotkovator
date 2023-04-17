@@ -26,7 +26,7 @@ Od teď všechny příkazy předpokládají, že se nacházíte v kořenovém ad
 pip install -r requirements.txt
 ```
 
-Jednotlivé moduly pak mají svoje požadavky na instalaci, ale většinou stačí nainstalovat závislosti příkazem: `pip install -r modules/<cesta k modulu>/requirements.txt`. Bližší informace najdete v [sekcích jednotlivých modulů](#konfigurace-modulů).
+Jednotlivé moduly pak mají svoje požadavky na instalaci, ale většinou stačí nainstalovat závislosti příkazem: `pip install -r modules/<cesta k modulu>/requirements.txt`. Bližší informace najdete v [sekcích jednotlivých modulů](#moduly).
 
 ## Konfigurace
 
@@ -55,7 +55,7 @@ modules:  # volitelné moduly
   - module: tag.face_recognition
 ```
 
-Pro detailní návod na konfiguraci jednotlivých modulů zajděte do sekce [Konfigurace modulů](#konfigurace-modulů).
+Pro detailní návod na konfiguraci jednotlivých modulů zajděte do sekce [Konfigurace modulů](#moduly).
 
 ## Použití
 
@@ -67,327 +67,27 @@ python fotkovator.py
 
 Po spuštění načte konfiguraci a okamžitě začne zpracovávat fotky z nakonfigurovaného zdroje. Způsob otevření uživatelského rozhraní záleží na nakonfigurovaném rozhraní.
 
-## Konfigurace modulů
-
-### Lokální soubory
-
-Přístup k lokálním souborům je umožněn modulem `localfs`. Periodicky kontroluje změny v souborovém systému. Nakonfigurovanou složku musíte vytvořit ručně, pak do ní můžete vkládat a z ní odstraňovat fotky a obrázky libovolně a systém by si měl poradit.
-
-#### Instalace
-
-```shell
-pip install -r modules/backend/localfs/requirements.txt
-```
-
-#### Argumenty
-
-`path` - (povinný) Cesta ke složce s obrázky
-
-`max_concurency` - (volitelný, výchozí hodnota: 16) Počet fotek které analyzovat současně
-
-#### Příklad konfigurace
-
-```yaml
-backend:
-  module: localfs
-  path: './photos'
-```
-
-### PostgreSQL
-
-PostgreSQL klient implementuje modul `PostgreSQL`. Vyžaduje externí [PostgreSQL](https://www.postgresql.org/) server.
-
-#### Instalace
-
-Závislosti klienta lze nainstalovat přes `pip`.
-
-```shell
-pip install -r modules/database/PostgreSQL/requirements.txt
-```
-
-Je nutné nainstalovat také server. Například přes [docker](https://www.docker.com/):
-
-```shell
-docker run --name fotkovatordb \
-           -p 5432:5432 \
-           -e POSTGRES_PASSWORD=mysecretpassword \
-           -e POSTGRES_USER=fotkovator \
-           -d postgres
-```
-
-#### Argumenty
-
-`user` - (volitelný, výchozí hodnota: fotkovator)
-
-`password` - (volitelný, výchozí hodnota: proměnná prostředí `PGPASSWORD`) heslo do databáze
-
-`host` - (volitelný, výchozí hodnota: localhost) IP nebo hostname PostgreSQL serveru
-
-`port` - (volitelný, výchozí hodnota: proměnná prostředí `PGPORT`, nebo `5432` není-li definovaná)
-
-`database` - (volitelný, výchozí hodnota: fotkovator) název databáze ve které fotkovátor ukládá data
-
-#### Příklad konfigurace
-
-```yaml
-database:
-  module: PostgreSQL
-  password: mysecretpassword
-```
-
-### Vektorový PostgreSQL
-
-Modul `database.PostgreSQL_kNN` implementuje klient pro [PostgreSQL](https://www.postgresql.org/)) s pluginem 
-[pgvector](https://github.com/pgvector/pgvector), který umožňuje vektorové operace. Vyžaduje externí server.
-
-#### Instalace
-
-Závislosti klienta lze nainstalovat přes `pip`.
-
-```shell
-pip install -r modules/database/PostgreSQL_kNN/requirements.txt
-```
-
-Je nutné nainstalovat také server. Například přes [docker](https://www.docker.com/):
-
-```shell
-docker run --name fotkovatordb \
-           -p 5432:5432 \
-           -e POSTGRES_PASSWORD=mysecretpassword \
-           -e POSTGRES_USER=fotkovator \
-           -d ankane/pgvector
-```
-
-#### Argumenty
-
-Stejné jako [Postges](#postgresql)
-
-#### Příklad konfigurace
-
-Stejné jako [Postges](#postgresql)
-
-### CLIP vyhledávání
-
-[CLIP](https://openai.com/research/clip) je neuronová síť propojující obrázky a text. Modul `search.CLIP` tuto 
-schopnost využívá k seřazování výsledků vyhledávání podle štítků. Vyhledávejte pokud možno v angličtině viz [první CLIP 
-modul](#clip).
-
-#### Instalace
-
-Modul vyžaduje databázi s podporou vektorů (např.: [`database.PostgreSQL_kNN`](#vektorový-postgresql)).
-
-```shell
-pip install -r modules/search/CLIP/requirements.txt
-```
-
-#### Argumenty
-
-`model` - (volitelný, výchozí hodnota: `ViT-B/32`) verze CLIPu, kterou požívat
-
-#### Příklad konfigurace
-
-```yam
-search:
-  module: CLIP
-```
-
-### Webové rozhraní
-
-Jednoduchý způsob jak přistupovat k Fotkovátoru je přes webový prohlížeč. Webový server implementuje modul `basic_webserver`. Pokud nezměníte konfiguraci stačí po zapnutí Fotkovátoru navštívit [localhost:5000](http://localhost:5000).
-
-#### Instalace
-
-```shell
-pip install -r modules/modules/frontend/basic_webserver/requirements.txt 
-```
-
-#### Argumenty
-
-`port` - (volitelný, výchozí hodnota: 5000) port na kterém poslouchat
-
-`host` - (volitelný, výchozí hodnota: localhost) interface kde poslouchat
-
-#### Příklad konfigurace
-
-```yaml
-modules:
-  - module: frontend.basic_webserver
-    port: 8080 # příklad změny portu
-```
-
-### Zpracování metadat
-
-Modul `metadata` přidává štítky na základě informací, které nejsou obsaženy v obraze samotném. Například datum pořízení obrázku, složky ve kterých se nachází, název fotoaparátu atd.
-
-#### Instalace
-
-```shell
-pip install -r modules/modules/tag/metadata/requirements.txt
-```
-
-#### Příklad konfigurace
-
-```yaml
-modules:
-  - module: tag.metadata
-```
-
-### Rozpoznání obličejů
-
-Modul `face_recognition` poskytuje wrapper na knihovnu [`face-recognition`](https://pypi.org/project/face-recognition/). Modul sám o sobě nepřiřazuje lidem jména, ale snaží se přiřadit stejnému člověku stejný štítek (např.: Osoba 1). Jakmile však tento štítek přejmenujete asociuje si nové jméno s daným obličejem a bude ho přiřazovat i novým fotkám.
-
-Začíná fungovat dobře až když má několik (> ~10) fotek člověka, jinak má tendenci obličeje seskupovat k sobě docela náhodným způsobem. Také do někdy samostatných skupin dává chybně označené obličeje.
-
-#### Instalace
-
-```shell
-pip install -r modules/modules/tag/face_recognition/requirements.txt
-```
-
-Je doporučené používat `dlib` z anacondy.
-
-```shell
-conda install -c conda-forge dlib
-```
-
-#### Argumenty
-
-`db_path` - (volitelný, výchozí hodnota: face.pickle) Cesta k souboru ve kterém si modul ukládá rozpoznané obličeje a další pomocné informace.
-
-#### Příklad konfigurace
-
-```yaml
-modules:
-  - module: tag.face_recognition
-```
-
-### CLIP
-
-[CLIP](https://openai.com/research/clip) je neuronová síť propojující obrázky a text. Lze ji aplikovat na rozpoznávání víceméně libovolných vizuálních konceptů popsatelných slovy. Implementuje ji modul `tag.CLIP`.
-
-Jde o asi nejmocnější část Fotkovátoru. Je velmi obecný a lze ho specializovat na rozlišování téměř čehokoliv. Jeho obecnost má však svoje limity. Nerozumí příliš dobře věcem, které jsou na internetu málo anotované. Pokoušel jsem se tento modul využít k detekci fotek, které jsou otočené, ale bez úspěchu.
-
-U méně používaných jazyků se jeho porozumění výrazně zhoršuje a s jazyky, které nejsou psané latinkou, je naprosto nepoužitelný. Proto konfigurace nabízí možnost zadat popis obrázku v jiném jazyce (doporučuji anglicky) než samotné přiřazené štítky.
-
-Tvorbu klasifikátoru si můžete představit jako seznam možností odpovědi na otázku „Co nejlépe popisuje daný obrázek?“. `threshold` pak určuje, jak moc si CLIP musí být jistý odpovědí, aby se štítky přiřadily.
-
-K tvorbě klasifikátoru je ještě nutné podotknout, že model je náchylný na formulaci daného popisu. Kolem tohoto problému již vzniká komunita tzv. prompt inženýrů, která se snaží najít metody formulování s nejlepšími výsledky.
-
-Pokud požíváte více klafisikátorů není nutné mít víc instancí CLIP modulu.
-
-#### Argumenty
-
-`model` - (volitelný, výchozí hodnota: `ViT-B/32`) verze CLIPu, kterou požívat
-
-`classifiers` - (povinný) seznam klasifikátorů
-
-`threshold` - (volitelný, výchozí hodnota: `0`) minimální pravděpodobnost nutná pro přiřazení štítku
-
-`concepts` - (povinný) vizuální koncepty a k ním asociované štítky (viz příklady konfigurace)
-
-Štítků spojených s daným konceptem může být libovolný počet. Pokud mají dva klasifikátory stejný název štítku, jsou tyto štítky automaticky sloučeny.
-
-`prefix` - text co se vloží před každý koncept (např.: "a photo of ")
-
-#### Instalace
-
-
-```shell
-pip install -r modules/modules/tag/CLIP/requirements.txt
-```
-
-Je doporučené používat `pytorch` a `torchvision` pomocí [anacondy](https://www.anaconda.com/products/distribution) viz [konfigurátor příkazu](https://pytorch.org/get-started/locally/).
-
-Například pro NVIDIA CUDA:
-
-```shell
-conda install pytorch torchvision pytorch-cuda=11.6 -c pytorch -c nvidia
-```
-
-#### Příklad konfigurace
-
-Jednoduchý klasifikátor umístění:
-
-```yaml
-modules:
-  - module: tag.CLIP
-    classifiers:
-      - threshold: .8
-        concepts:
-          indoors: uvnitř
-          outdoors: venku
-          "in a vehicle": ve vozidle
-```
-
-Pokročilý klasifikátor vytvořený na základě datasetu [Places2](http://places2.csail.mit.edu/index.html) najdete v [samostaném souboru](modules/modules/tag/CLIP/places.yaml).
-
-Jednoduchý klasifikátor objektu fotky:
-
-```yaml
-modules:
-  - module: tag.CLIP
-    classifiers:
-      - prefix: "a photo of "
-        concepts:
-          people: lidé
-          a landscape: krajina
-          architecture: architektura
-          animals: zvířata
-          food: jídlo
-          nature: příroda
-          travel: cestování
-          a sport: sport
-          an event: událost
-          an object: předměty
-          an art piece: umění
-          a vehicle: vozidla
-          a paper: dokument
-          space: vesmír
-          electronics: elektronika
-```
-
-Detektor fotek na smazání:
-
-```yaml
-modules:
-  - module: tag.CLIP
-    classifiers:
-      - threshold: .5
-        concepts:
-          "bad photo": "nepovedená"
-          "normal photo": []
-          "good photo": []
-          "excellent photo": []  # zde si můžete přidat vlastní štítek
-```
-
-Detektor ne-fotek:
-
-```yaml
-modules:
-  - module: tag.CLIP
-    classifiers:
-      - concepts:
-        "photo, photograph": []
-        "diagram, chart, graph, infographic, figure": "diagram"
-        "document, photo of a document, note, paper": "dokument"
-        "meme, joke, text, template, deep fried": "meme"
-        "drawing, scribble": "obrázek"
-```
-
-### Záznamník událostí
-
-Modul `event_logger` slouží hlavně pro debugování. Vypisuje události a jejich argumenty do konzole.
-
-#### Instalace
-
-Není potřeba nic.
-
-#### Příklad konfigurace
-
-```yaml
-modules:
-  - module: misc.event_logger
-```
+## Moduly
+
+Návod na instalaci a konfiguraci jednotlivých modulů najdete ve složkách jednotlivých modulů. Tady je seznam všech 
+modulů.
+
+- Zdroje obrázků
+  - [Lokální soubory](modules/backend/localfs/README.md)
+- Databáze
+  - [PostgreSQL](modules/database/PostgreSQL/README.md)
+  - [Vektorový PostgreSQL](modules/database/PostgreSQL_kNN/README.md)
+- Vyhledávání
+  - [CLIP vyhledávání](modules/search/CLIP/README.md)
+- Moduly
+  - Grafické rozhraní
+    - [Webové rozhraní](modules/modules/frontend/basic_webserver/README.md)
+  - Štítkovací
+    - [Rozpoznání obličejů](modules/modules/tag/face_recognition/README.md)
+    - [Zpracování metadat](modules/modules/tag/metadata/README.md)
+    - [CLIP](modules/modules/tag/CLIP/README.md)
+  - Další
+    - [Záznamník událostí](modules/modules/misc/event_logger/README.md)
 
 ## Možnosti rozšíření
 
