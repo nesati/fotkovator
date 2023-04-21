@@ -74,6 +74,7 @@ modulů.
 
 - Zdroje obrázků
   - [Lokální soubory](modules/backend/localfs/README.md)
+  - [Plex](modules/backend/plex/README.md)
 - Databáze
   - [PostgreSQL](modules/database/PostgreSQL/README.md)
   - [Vektorový PostgreSQL](modules/database/PostgreSQL_kNN/README.md)

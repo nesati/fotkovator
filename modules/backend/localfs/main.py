@@ -12,6 +12,28 @@ from PIL import Image
 from utils.interface import Backend
 
 
+async def worker(q):
+    encountered_exceptions = []
+    try:
+        while 1:
+            job = await q.get()
+            try:
+                await job
+            except Exception as e:
+                print('worker encountered exceptions', type(e), e)
+                # don't raise exception now as it would stop the worker but save it for raising later
+                encountered_exceptions.append(e)
+            finally:  # this must happen even if exception is raised to prevent q.join from hanging forever
+                q.task_done()
+    except asyncio.CancelledError:
+        # don't raise an exception when the worker is stopped due to all tasks being done
+        pass
+
+    for e in encountered_exceptions:
+        # raise exceptions for debugging
+        raise e
+
+
 class LocalfsBackend(Backend):
     def __init__(self, bus, database, loop, config):
         super().__init__(bus, database, loop)
@@ -92,26 +114,6 @@ class LocalfsBackend(Backend):
 
             if uid in images:
                 images.remove(uid)  # mark as found
-
-        async def worker(q):
-            encountered_exceptions = []
-            try:
-                while 1:
-                    job = await q.get()
-                    try:
-                        await job
-                    except Exception as e:
-                        # don't raise exception now as it would stop the worker but save it for raising later
-                        encountered_exceptions.append(e)
-                    finally:  # this must happen even if exception is raised to prevent q.join from hanging forever
-                        q.task_done()
-            except asyncio.CancelledError:
-                # don't raise an exception when the worker is stopped due to all tasks being done
-                pass
-
-            for e in encountered_exceptions:
-                # raise exceptions for debugging
-                raise e
 
         async def DFS(path, tasks, images):
             for item in await aiofiles.os.scandir(path):
