@@ -86,6 +86,7 @@ modulů.
   - Štítkovací
     - [Rozpoznání obličejů](modules/modules/tag/face_recognition/README.md)
     - [Zpracování metadat](modules/modules/tag/metadata/README.md)
+    - [Infinity For Reddit](modules/modules/tag/infinity_for_reddit/README.md)
     - [CLIP](modules/modules/tag/CLIP/README.md)
   - Další
     - [Záznamník událostí](modules/modules/misc/event_logger/README.md)
