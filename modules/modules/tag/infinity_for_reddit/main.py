@@ -22,7 +22,7 @@ class MetadataTagger(TagModule):
             path = list(map(lambda s: s.strip(), Path(metadata['path']).parts))  # split path
             filename = path[-1]
 
-            match = re.match(r"^([^-]+)-......\.(jpg|gif|png|mp4)$", filename)
+            match = re.match(r"^([^-]+)-[a-z0-9]{6,13}(\.png)?\.(jpg|gif|png|mp4)$", filename)
 
             if match is not None:
                 await self.bus.emit('tag', (uid, match.group(1), {}))
