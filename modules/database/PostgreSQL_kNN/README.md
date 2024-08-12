@@ -18,7 +18,7 @@ docker run --name fotkovatordb \
            -p 5432:5432 \
            -e POSTGRES_PASSWORD=mysecretpassword \
            -e POSTGRES_USER=fotkovator \
-           -d ankane/pgvector
+           -d pgvector/pgvector:pg16
 ```
 
 ## Argumenty
